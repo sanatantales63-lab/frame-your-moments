@@ -2,11 +2,11 @@
  * Frame Your Moments — Supabase & Cloudinary Configuration
  */
 
-export const SUPABASE_URL = 'https://vhbspahnxahzilfgjlsg.supabase.co';
-export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoYnNwYWhueGFoemlsZmdqbHNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDk2MDUsImV4cCI6MjEwMjUyNTYwNX0.Kedy_ltqJ6u-0MVaEhh8LJx3oaBLEcvTYpod-djxPjY';
+export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://vhbspahnxahzilfgjlsg.supabase.co';
+export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoYnNwYWhueGFoemlsZmdqbHNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NDk2MDUsImV4cCI6MjEwMjUyNTYwNX0.Kedy_ltqJ6u-0MVaEhh8LJx3oaBLEcvTYpod-djxPjY';
 
-export const CLOUDINARY_CLOUD_NAME = 'vyc9r3kd';
-export const CLOUDINARY_UPLOAD_PRESET = 'frameyourmoments';
+export const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'vyc9r3kd';
+export const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'frameyourmoments';
 
 /**
  * Lightweight, zero-dependency Supabase REST Client
