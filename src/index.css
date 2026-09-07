@@ -1,0 +1,325 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-cream: #FAF7F2;
+    --cream-card: #F5EFE6;
+    --cream-border: #E8DFD1;
+    --gold-accent: #C5A059;
+    --gold-glow: rgba(197, 160, 89, 0.3);
+    --gold-gradient: linear-gradient(135deg, #BF953F 0%, #FCF6BA 25%, #B38728 50%, #FBF5B7 75%, #AA771C 100%);
+    --charcoal-main: #1C1917;
+    --charcoal-muted: #57534E;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--bg-cream);
+    color: var(--charcoal-main);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, .font-serif-luxury {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+  }
+
+  .font-cinzel {
+    font-family: 'Cinzel', serif;
+  }
+}
+
+/* Gold Text Effect */
+.gold-text {
+  background: linear-gradient(135deg, #BF953F 0%, #E2C275 30%, #B38728 65%, #FBF5B7 85%, #AA771C 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-border {
+  border-image: linear-gradient(135deg, #BF953F, #FCF6BA, #AA771C) 1;
+}
+
+/* Shimmer Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, rgba(197, 160, 89, 0.1) 0%, rgba(197, 160, 89, 0.5) 50%, rgba(197, 160, 89, 0.1) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+/* Pulse Lens aperture effect */
+@keyframes apertureRotate {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.05); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.animate-aperture {
+  animation: apertureRotate 18s linear infinite;
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FAF7F2;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D8C8AF;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C5A059;
+}
+
+/* Shine sweep on Book Now button — auto repeats every 4s */
+@keyframes shineSweep {
+  0%, 100% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+}
+
+.shine-sweep {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%);
+  animation: shineSweep 4s ease-in-out infinite;
+}
+
+
+/* ═══════════════════════════════════════════════════
+   FLOATING CONTACT BUTTON  (piixonova-style)
+═══════════════════════════════════════════════════ */
+
+/* ---------- Blur Backdrop ---------- */
+.fab-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+
+  /* multi-stop radial for a real droplet look */
+  background: radial-gradient(
+    ellipse 60% 75% at 100% 100%,
+    rgba(250, 247, 242, 0.72) 0%,
+    rgba(250, 247, 242, 0.55) 30%,
+    rgba(250, 247, 242, 0.25) 60%,
+    transparent 100%
+  );
+  backdrop-filter: blur(0px) saturate(1);
+  -webkit-backdrop-filter: blur(0px) saturate(1);
+
+  opacity: 0;
+  transition:
+    opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    backdrop-filter 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    -webkit-backdrop-filter 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab-backdrop--open {
+  opacity: 1;
+  pointer-events: auto;
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+}
+
+/* ---------- FAB Wrapper ---------- */
+.fab-wrapper {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 9100;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+/* ---------- Menu (options list) ---------- */
+.fab-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+
+/* ---------- Single option pill ---------- */
+.fab-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px 9px 10px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    0 1px 4px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255,255,255,0.8);
+  text-decoration: none;
+  color: #1C1917;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+
+  /* hidden by default */
+  opacity: 0;
+  transform: translateY(14px) scale(0.94);
+  pointer-events: none;
+  transition:
+    opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+  transition-delay: var(--delay, 0s);
+}
+
+.fab-option__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+}
+
+.fab-option__label {
+  padding-right: 2px;
+}
+
+/* hover lift */
+.fab-option:hover {
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.14),
+    0 2px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(0) scale(1.03) !important;
+  color: var(--accent, #E64A6E);
+}
+
+/* visible state */
+.fab-menu--open .fab-option {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+/* ---------- Trigger button ---------- */
+.fab-trigger {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  overflow: visible;          /* allow ring + glow to show outside */
+
+  /* glass look */
+  background: rgba(255, 255, 255, 0.93);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.10),
+    0 1px 4px rgba(0, 0, 0, 0.07),
+    0 0 18px 4px rgba(230, 74, 110, 0.18),   /* pink glow */
+    inset 0 1px 0 rgba(255,255,255,1);
+  color: #1C1917;
+
+  transition:
+    transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+}
+
+.fab-trigger:hover,
+.fab-trigger--open {
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow:
+    0 8px 36px rgba(0, 0, 0, 0.14),
+    0 2px 8px rgba(0, 0, 0, 0.09),
+    0 0 30px 8px rgba(230, 74, 110, 0.28),   /* stronger pink glow */
+    inset 0 1px 0 rgba(255,255,255,1);
+  transform: scale(1.08);
+}
+
+/* icon rotate transition */
+.fab-trigger__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
+}
+
+.fab-trigger__icon--rotated {
+  transform: rotate(90deg);
+}
+
+/* gold ring on open */
+.fab-trigger::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: linear-gradient(135deg, #BF953F, #FCF6BA, #E64A6E) border-box;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.fab-trigger--open::before,
+.fab-trigger:hover::before {
+  opacity: 1;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .fab-wrapper {
+    bottom: 20px;
+    right: 16px;
+  }
+
+  .fab-trigger {
+    width: 52px;
+    height: 52px;
+  }
+
+  .fab-option {
+    font-size: 13px;
+    padding: 8px 12px 8px 9px;
+  }
+}
