@@ -121,9 +121,9 @@ export default function FloatingContact() {
     if (!isTouchDevice.current) setOpen(false);
   };
 
-  /* ── mobile: toggle on click ── */
+  /* ── toggle on click (both desktop & touch) ── */
   const handleButtonClick = () => {
-    if (isTouchDevice.current) setOpen((v) => !v);
+    setOpen((v) => !v);
   };
 
   return (
@@ -131,6 +131,15 @@ export default function FloatingContact() {
       {/* ── Backdrop blur overlay ── */}
       <div
         className={`fab-backdrop ${open ? 'fab-backdrop--open' : ''}`}
+        onClick={() => setOpen(false)}
+        style={
+          open
+            ? {
+                backdropFilter: 'blur(18px) saturate(1.4)',
+                WebkitBackdropFilter: 'blur(18px) saturate(1.4)',
+              }
+            : undefined
+        }
         aria-hidden="true"
       />
 
@@ -151,7 +160,7 @@ export default function FloatingContact() {
               rel="noopener noreferrer"
               className="fab-option"
               style={{ '--delay': `${i * 0.06}s`, '--accent': opt.color }}
-              onClick={() => isTouchDevice.current && setOpen(false)}
+              onClick={() => setOpen(false)}
             >
               <span className="fab-option__icon">{opt.icon}</span>
               <span className="fab-option__label">{opt.label}</span>

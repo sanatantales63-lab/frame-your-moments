@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Award, Compass, Heart, ShieldCheck, ArrowUpRight, X } from 'lucide-react';
+import { getAboutPhotos } from '../data/siteMediaData';
 
 const ethosData = [
   {
@@ -29,6 +30,17 @@ const ethosData = [
 export default function About() {
   const [activeEthos, setActiveEthos] = useState('art');
   const [videoOpen, setVideoOpen] = useState(false);
+  const [aboutPhotos, setAboutPhotos] = useState({
+    about_main: '',
+    about_detail: '',
+    about_founder: ''
+  });
+
+  useEffect(() => {
+    getAboutPhotos().then((data) => {
+      if (data) setAboutPhotos(data);
+    });
+  }, []);
 
   const selectedEthos = ethosData.find((e) => e.id === activeEthos) || ethosData[0];
 
@@ -148,8 +160,17 @@ export default function About() {
             <div className="flex flex-wrap items-center justify-between gap-6 pt-4">
               {/* Founder signature info */}
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full border-2 border-[#E64A6E] overflow-hidden bg-[#F5EFE6]">
-                  <img src="/client1.jpg" alt="Lead Photographer" className="w-full h-full object-cover" />
+                <div className="w-12 h-12 rounded-full border-2 border-[#E64A6E] overflow-hidden bg-[#F5EFE6] flex items-center justify-center">
+                  {aboutPhotos.about_founder ? (
+                    <img
+                      src={aboutPhotos.about_founder}
+                      alt="Lead Photographer"
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <span className="font-serif-luxury text-lg text-[#E64A6E] font-bold">R</span>
+                  )}
                 </div>
                 <div>
                   <h4 className="font-serif-luxury text-lg font-bold text-[#1C1917] leading-none">
@@ -185,11 +206,21 @@ export default function About() {
             
             {/* Main Arch Frame Photo */}
             <div className="relative w-full max-w-md aspect-[3/4] rounded-t-[140px] sm:rounded-t-[180px] rounded-b-2xl overflow-hidden border border-[#E8DFD1] shadow-2xl bg-[#F5EFE6]">
-              <img
-                src="/client5.jpg"
-                alt="FYM Wedding Story"
-                className="w-full h-full object-cover filter brightness-[0.96] hover:scale-105 transition-transform duration-1000"
-              />
+              {aboutPhotos.about_main ? (
+                <img
+                  src={aboutPhotos.about_main}
+                  alt="FYM Wedding Story"
+                  className="w-full h-full object-cover filter brightness-[0.96] hover:scale-105 transition-transform duration-1000"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-b from-[#E8DFD1]/50 to-[#FAF7F2] flex flex-col items-center justify-center p-8 text-center">
+                  <div className="w-16 h-16 rounded-full border border-[#C5A059]/40 flex items-center justify-center mb-4 bg-white/40">
+                    <span className="font-serif-luxury text-2xl text-[#C5A059]">✦</span>
+                  </div>
+                  <span className="font-cinzel text-xs text-[#8A7968] tracking-widest uppercase font-semibold">Fine Art Legacy</span>
+                </div>
+              )}
 
               {/* ✨ Dreamy Cloudy Overlays Top & Bottom (Matching Hero) */}
               <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#FAF7F2] via-[#FAF7F2]/60 to-transparent pointer-events-none" />
@@ -209,9 +240,20 @@ export default function About() {
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="absolute -bottom-6 -left-2 sm:left-4 w-44 sm:w-52 aspect-[3/4] rounded-2xl overflow-hidden border-4 border-[#FAF7F2] shadow-2xl hidden sm:block"
+              className="absolute -bottom-6 -left-2 sm:left-4 w-44 sm:w-52 aspect-[3/4] rounded-2xl overflow-hidden border-4 border-[#FAF7F2] shadow-2xl hidden sm:block bg-[#F5EFE6]"
             >
-              <img src="/client18.jpg" alt="Fine Art Bridal Detail" className="w-full h-full object-cover" />
+              {aboutPhotos.about_detail ? (
+                <img
+                  src={aboutPhotos.about_detail}
+                  alt="Fine Art Bridal Detail"
+                  className="w-full h-full object-cover"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-[#1C1917]/90 to-[#2A241F] flex items-center justify-center p-4 text-center">
+                  <span className="font-cinzel text-[10px] tracking-widest text-[#E2C275] uppercase">Craft & Detail</span>
+                </div>
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <span className="absolute bottom-3 left-3 right-3 font-cinzel text-[9px] tracking-widest uppercase text-white font-semibold text-center">
                 Henna & Details

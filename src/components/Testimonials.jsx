@@ -1,71 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { Star, ChevronLeft, ChevronRight, Quote, X, Heart, MessageCircleHeart } from 'lucide-react';
-
-/* Initial Testimonials Dataset (Admin ready — syncs with localStorage if available) */
-const DEFAULT_TESTIMONIALS = [
-  {
-    id: 't1',
-    name: 'Supriya & Rohan',
-    location: 'Toronto, Canada',
-    event: 'Destination Wedding',
-    rating: 5,
-    image: '',
-    quote:
-      "A wedding isn't about how much money has been put in, but about how many genuine emotions were shared. Rishav and the FYM team captured every unscripted laugh and silent tear. Looking at our album brings back every chill from that week.",
-    fullStory:
-      'From our initial Zoom call across continents to the final pheras in Canada, Frame Your Moments was incredible. They felt like family members who just happened to be master photographers. The editorial color grading is straight out of a luxury magazine!',
-  },
-  {
-    id: 't2',
-    name: 'Prasanta & Archana',
-    location: 'Hyderabad, India',
-    event: 'Royal Palace Wedding',
-    rating: 5,
-    image: '',
-    quote:
-      'Looks Amazing. The absolute best photography team I have ever seen. Exceptional job! The printed album quality and royal color grading are beyond our highest expectations.',
-    fullStory:
-      'We wanted a team that understood traditional South Indian royal ceremonies without making things feel stiff or artificial. Rishav\'s vision blended fine-art aesthetic with raw emotional moments. Every single frame tells a timeless story.',
-  },
-  {
-    id: 't3',
-    name: 'Gayatri & Vikram',
-    location: 'Kuala Lumpur, Malaysia',
-    event: 'International Destination',
-    rating: 5,
-    image: '',
-    quote:
-      'Rishav... amazing work making this moment so special for us! The photos turned out really well. Thank you for turning our memories into timeless pieces of art.',
-    fullStory:
-      'Managing an overseas destination wedding had its stresses, but FYM handled our photography seamlessly. Their drone team and cinematographers captured the breathtaking beach sunsets and ritual details with unmatched elegance.',
-  },
-  {
-    id: 't4',
-    name: 'Ananya & Dev',
-    location: 'Kolkata, India',
-    event: 'Bengali Heritage Wedding',
-    rating: 5,
-    image: '',
-    quote:
-      'Frame Your Moments made us feel like royalty. The candid shots during the Sindoor Khela and Saat Paake Bandha are so full of soul and warmth.',
-    fullStory:
-      'Bengali weddings are filled with intense colors and emotions. FYM preserved the deep reds, golden ornaments, and spontaneous laughter of our family without interrupting any sacred ritual. Pure magic!',
-  },
-  {
-    id: 't5',
-    name: 'Pooja & Sameer',
-    location: 'Mumbai, India',
-    event: 'Pre-wedding & Sangeet',
-    rating: 5,
-    image: '',
-    quote:
-      'From our romantic pre-wedding session to the high-energy Sangeet night, FYM captured the electric atmosphere perfectly. Highly recommended!',
-    fullStory:
-      'The video highlight film brought happy tears to everyone at our reception. They captured moments we did not even realize were happening. The attention to detail and color palette is truly world-class.',
-  },
-];
-
+import { getTestimonials, DEFAULT_TESTIMONIALS } from '../data/testimonialsData';
 /* ── Custom CSS for Watermark & Stroke Typography ── */
 const testimonialsCSS = `
 .watermark-text-stroke {
@@ -92,19 +28,13 @@ export default function Testimonials() {
   const [activeStory, setActiveStory] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  /* Load from localStorage if available (Admin panel hook) */
+  /* Load from Supabase + localStorage */
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('fym_testimonials');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setTestimonials(parsed);
-        }
+    getTestimonials().then((items) => {
+      if (Array.isArray(items) && items.length > 0) {
+        setTestimonials(items);
       }
-    } catch (e) {
-      // Fallback to default dataset
-    }
+    });
   }, []);
 
   /* Mobile/Desktop scroll controls */

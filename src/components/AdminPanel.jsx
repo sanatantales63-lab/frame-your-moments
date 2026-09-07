@@ -36,7 +36,11 @@ import {
   Edit3,
   Bold,
   Italic,
-  Underline
+  Underline,
+  Star,
+  MessageSquare,
+  User,
+  X
 } from 'lucide-react';
 import {
   compressImage,
@@ -79,8 +83,16 @@ import {
   getGridPhotos,
   saveGridPhotos,
   resetGridPhotos,
-  deleteGridPhoto
+  deleteGridPhoto,
+  getAboutPhotos,
+  saveAboutPhoto
 } from '../data/siteMediaData';
+import {
+  getTestimonials,
+  saveTestimonial,
+  deleteTestimonial,
+  resetTestimonials
+} from '../data/testimonialsData';
 import {
   getBlogsFromLocal,
   fetchBlogsFromSupabase,
@@ -189,6 +201,20 @@ CREATE TABLE IF NOT EXISTS public.fym_blogs (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 7. Client Reviews & Testimonials Table
+CREATE TABLE IF NOT EXISTS public.fym_testimonials (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    location TEXT DEFAULT '',
+    event TEXT DEFAULT 'Destination Wedding',
+    rating INT DEFAULT 5,
+    image TEXT DEFAULT '',
+    quote TEXT NOT NULL,
+    full_story TEXT DEFAULT '',
+    sort_order INT DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Enable Row Level Security (RLS) & Public Access Policies for Anon Client
 ALTER TABLE public.fym_media ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fym_services_gallery ENABLE ROW LEVEL SECURITY;
@@ -196,6 +222,7 @@ ALTER TABLE public.fym_service_banners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fym_wedding_films ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fym_wedding_reels ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.fym_blogs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.fym_testimonials ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies if they exist to prevent 'already exists' errors
 DROP POLICY IF EXISTS "Allow public read fym_media" ON public.fym_media;
@@ -210,6 +237,8 @@ DROP POLICY IF EXISTS "Allow public read fym_wedding_reels" ON public.fym_weddin
 DROP POLICY IF EXISTS "Allow public write fym_wedding_reels" ON public.fym_wedding_reels;
 DROP POLICY IF EXISTS "Allow public read fym_blogs" ON public.fym_blogs;
 DROP POLICY IF EXISTS "Allow public write fym_blogs" ON public.fym_blogs;
+DROP POLICY IF EXISTS "Allow public read fym_testimonials" ON public.fym_testimonials;
+DROP POLICY IF EXISTS "Allow public write fym_testimonials" ON public.fym_testimonials;
 
 -- Allow anon public read/write for instant website syncing
 CREATE POLICY "Allow public read fym_media" ON public.fym_media FOR SELECT USING (true);
@@ -229,6 +258,9 @@ CREATE POLICY "Allow public write fym_wedding_reels" ON public.fym_wedding_reels
 
 CREATE POLICY "Allow public read fym_blogs" ON public.fym_blogs FOR SELECT USING (true);
 CREATE POLICY "Allow public write fym_blogs" ON public.fym_blogs FOR ALL USING (true) WITH CHECK (true);
+
+CREATE POLICY "Allow public read fym_testimonials" ON public.fym_testimonials FOR SELECT USING (true);
+CREATE POLICY "Allow public write fym_testimonials" ON public.fym_testimonials FOR ALL USING (true) WITH CHECK (true);
 `;
 
 export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigateToService, onNavigateToBlogs }) {
@@ -316,6 +348,33 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
     published: true
   });
 
+  // ── About Section Photos State ──
+  const [aboutPhotos, setAboutPhotos] = useState({
+    about_main: '',
+    about_detail: '',
+    about_founder: '',
+    video_poster: ''
+  });
+  const [isUploadingAbout, setIsUploadingAbout] = useState('');
+  const [aboutUploadProgress, setAboutUploadProgress] = useState(0);
+  const [aboutUploadStatus, setAboutUploadStatus] = useState('');
+
+  // ── Testimonials / Reviews State ──
+  const [testimonials, setTestimonials] = useState([]);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState(null);
+  const [isUploadingReviewImg, setIsUploadingReviewImg] = useState(false);
+  const [reviewImgProgress, setReviewImgProgress] = useState(0);
+  const [reviewForm, setReviewForm] = useState({
+    name: '',
+    location: '',
+    event: 'Destination Wedding',
+    rating: 5,
+    image: '',
+    quote: '',
+    fullStory: ''
+  });
+
   const fileInputRef = useRef(null);
   const folderInputRef = useRef(null);
   const blogCoverInputRef = useRef(null);
@@ -349,6 +408,16 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
     // Load Hero & Grid — Supabase always overwrites
     getHeroPhotos().then(setHeroPhotos);
     getGridPhotos().then(setGridPhotos);
+
+    // Load About Section Photos
+    getAboutPhotos().then((data) => {
+      if (data) setAboutPhotos(data);
+    });
+
+    // Load Testimonials / Reviews
+    getTestimonials().then((data) => {
+      if (Array.isArray(data)) setTestimonials(data);
+    });
 
     // Load Videos & Reels — Supabase always overwrites localStorage
     fetchFilmsFromSupabase().then((data) => {
@@ -442,6 +511,163 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
     });
 
     await deleteServiceBannerFromSupabase(activeServiceSlug);
+  };
+
+  // ── Handle Upload About Photo with Smart Compression ──
+  const handleUploadAboutPhoto = async (key, file) => {
+    if (!file) return;
+    setIsUploadingAbout(key);
+    setAboutUploadProgress(20);
+    setAboutUploadStatus(`Compressing & optimizing ${file.name}...`);
+
+    try {
+      const compressionResult = await compressImage(file, {
+        maxSizeKB: key === 'about_founder' ? 300 : 700,
+        quality: 0.85
+      });
+
+      setAboutUploadProgress(50);
+      setAboutUploadStatus('Uploading to Cloudinary...');
+
+      const uploadRes = await uploadToCloudinary(compressionResult.file, {
+        onProgress: (percent) => {
+          setAboutUploadProgress(50 + Math.round(percent * 0.45));
+        }
+      });
+
+      if (uploadRes.success) {
+        setAboutUploadProgress(95);
+        setAboutUploadStatus('Saving to Supabase...');
+
+        const photoData = {
+          url: uploadRes.url,
+          title: key,
+          isCompressed: compressionResult.wasCompressed,
+          originalSize: compressionResult.originalSize,
+          compressedSize: compressionResult.compressedSize
+        };
+
+        await saveAboutPhoto(key, photoData);
+        setAboutPhotos((prev) => ({ ...prev, [key]: uploadRes.url }));
+        setAboutUploadProgress(100);
+        setAboutUploadStatus('Saved successfully!');
+      } else {
+        alert('Failed to upload image. Please check network.');
+      }
+    } catch (err) {
+      console.error('About photo upload error:', err);
+      alert('Error: ' + (err.message || 'Failed to upload'));
+    }
+
+    setTimeout(() => {
+      setIsUploadingAbout('');
+      setAboutUploadProgress(0);
+      setAboutUploadStatus('');
+    }, 1200);
+  };
+
+  // ── Delete About Photo ──
+  const handleDeleteAboutPhoto = async (key, label) => {
+    if (!window.confirm(`Are you sure you want to remove the image for "${label}"?`)) return;
+    setAboutPhotos((prev) => ({ ...prev, [key]: '' }));
+    await saveAboutPhoto(key, { url: '', title: key });
+  };
+
+  // ── Handle Review Couple Image Upload with Smart Compression ──
+  const handleReviewPhotoSelected = async (file) => {
+    if (!file) return;
+    setIsUploadingReviewImg(true);
+    setReviewImgProgress(25);
+
+    try {
+      const compressionResult = await compressImage(file, {
+        maxSizeKB: 400,
+        quality: 0.85
+      });
+
+      setReviewImgProgress(55);
+      const uploadRes = await uploadToCloudinary(compressionResult.file, {
+        onProgress: (percent) => {
+          setReviewImgProgress(55 + Math.round(percent * 0.4));
+        }
+      });
+
+      if (uploadRes.success) {
+        setReviewForm((prev) => ({ ...prev, image: uploadRes.url }));
+        setReviewImgProgress(100);
+      } else {
+        alert('Failed to upload couple photo.');
+      }
+    } catch (err) {
+      console.error('Review image upload failed:', err);
+      alert('Upload failed: ' + err.message);
+    }
+
+    setTimeout(() => {
+      setIsUploadingReviewImg(false);
+      setReviewImgProgress(0);
+    }, 800);
+  };
+
+  // ── Save Review (Add / Edit) ──
+  const handleSaveReview = async (e) => {
+    e.preventDefault();
+    if (!reviewForm.name || !reviewForm.quote) {
+      alert('Please provide Couple Names and a Review Quote.');
+      return;
+    }
+
+    const reviewToSave = {
+      ...reviewForm,
+      id: editingReviewId || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 't-' + Date.now()),
+      rating: Number(reviewForm.rating) || 5
+    };
+
+    await saveTestimonial(reviewToSave);
+    const fresh = await getTestimonials();
+    setTestimonials(fresh);
+
+    setReviewModalOpen(false);
+    setEditingReviewId(null);
+    setReviewForm({
+      name: '',
+      location: '',
+      event: 'Destination Wedding',
+      rating: 5,
+      image: '',
+      quote: '',
+      fullStory: ''
+    });
+  };
+
+  // ── Edit Review Modal Open ──
+  const handleOpenEditReview = (item) => {
+    setEditingReviewId(item.id);
+    setReviewForm({
+      name: item.name || '',
+      location: item.location || '',
+      event: item.event || 'Destination Wedding',
+      rating: item.rating || 5,
+      image: item.image || '',
+      quote: item.quote || '',
+      fullStory: item.fullStory || item.full_story || ''
+    });
+    setReviewModalOpen(true);
+  };
+
+  // ── Delete Review ──
+  const handleDeleteReview = async (id, name) => {
+    if (!window.confirm(`Delete review from "${name}"?`)) return;
+    await deleteTestimonial(id);
+    const fresh = await getTestimonials();
+    setTestimonials(fresh);
+  };
+
+  // ── Reset Reviews ──
+  const handleResetReviews = async () => {
+    if (!window.confirm('Reset all reviews to default initial stories?')) return;
+    const fresh = await resetTestimonials();
+    setTestimonials(fresh);
   };
 
   // ── Handle PIN Login ──
@@ -1095,7 +1321,9 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
             { id: 'services', label: 'Service Galleries', icon: Layers },
             { id: 'blogs', label: 'Blogs & Journal', icon: BookOpen },
             { id: 'hero', label: 'Hero Marquee', icon: Camera },
-            { id: 'grid', label: 'Grid Showcase (14)', icon: Grid },
+            { id: 'grid', label: 'Grid Showcase', icon: Grid },
+            { id: 'about', label: 'About & Story', icon: Sparkles },
+            { id: 'reviews', label: 'Reviews & Stories', icon: Star },
             { id: 'videos', label: 'Videos & Reels', icon: Film },
             { id: 'sql', label: 'Supabase SQL', icon: Sliders }
           ].map((tab) => {
@@ -2086,6 +2314,571 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {/* TAB: ABOUT & STORY PHILOSOPHY                                           */}
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {activeTab === 'about' && (
+          <div className="space-y-8">
+            {/* Header */}
+            <div className="bg-[#141210] border border-white/10 rounded-2xl p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-serif-luxury text-2xl text-white font-medium">
+                    About & Story Philosophy Imagery
+                  </h3>
+                  <p className="font-sans text-xs text-[#A8A29E] mt-1">
+                    Manage the iconic Arch Frame portrait, the secondary Detail card, Founder avatar, and Featured Video poster. All uploads are automatically compressed to WebP and synced with Supabase.
+                  </p>
+                </div>
+                {isUploadingAbout && (
+                  <div className="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-xl">
+                    <RefreshCw size={14} className="animate-spin text-[#C5A059]" />
+                    <span className="font-cinzel text-xs text-[#C5A059]">{aboutUploadStatus} ({aboutUploadProgress}%)</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 4 Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Card 1: Main Arch Photo */}
+              <div className="bg-[#181614] border border-white/10 rounded-2xl p-5 flex flex-col justify-between space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-cinzel text-[10px] tracking-widest uppercase text-[#C5A059] font-bold">01 • Arch Portrait</span>
+                    {aboutPhotos.about_main ? (
+                      <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono">Live</span>
+                    ) : (
+                      <span className="text-[9px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-mono">Fallback</span>
+                    )}
+                  </div>
+                  <h4 className="font-serif-luxury text-lg text-white font-semibold">Grand Arch Story Photo</h4>
+                  <p className="font-sans text-xs text-[#A8A29E] mt-1">The iconic arch frame photograph displayed on the right of the About section.</p>
+                </div>
+
+                <div className="relative aspect-[3/4] rounded-t-[70px] rounded-b-xl overflow-hidden bg-black/50 border border-white/10 flex items-center justify-center">
+                  {aboutPhotos.about_main ? (
+                    <img src={aboutPhotos.about_main} alt="Arch Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-center p-4">
+                      <ImageIcon size={28} className="mx-auto text-white/30 mb-2" />
+                      <span className="font-cinzel text-[10px] text-white/40 uppercase">No image uploaded</span>
+                    </div>
+                  )}
+                  {isUploadingAbout === 'about_main' && (
+                    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-4 text-center">
+                      <div className="w-8 h-8 border-2 border-[#C5A059] border-t-transparent rounded-full animate-spin mb-2" />
+                      <span className="font-cinzel text-[10px] text-[#C5A059]">{aboutUploadProgress}%</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                  <label className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-[#C5A059] text-[#1C1917] font-cinzel text-[10px] tracking-wider uppercase font-bold hover:scale-[1.02] transition-all cursor-pointer">
+                    <UploadCloud size={13} />
+                    <span>Upload Arch</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleUploadAboutPhoto('about_main', file);
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                  {aboutPhotos.about_main && (
+                    <button
+                      onClick={() => handleDeleteAboutPhoto('about_main', 'Arch Portrait')}
+                      className="p-2.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 transition-colors cursor-pointer"
+                      title="Remove custom photo"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Card 2: Secondary Detail / Henna Card */}
+              <div className="bg-[#181614] border border-white/10 rounded-2xl p-5 flex flex-col justify-between space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-cinzel text-[10px] tracking-widest uppercase text-[#E64A6E] font-bold">02 • Detail Card</span>
+                    {aboutPhotos.about_detail ? (
+                      <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono">Live</span>
+                    ) : (
+                      <span className="text-[9px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-mono">Fallback</span>
+                    )}
+                  </div>
+                  <h4 className="font-serif-luxury text-lg text-white font-semibold">Bridal Detail / Henna</h4>
+                  <p className="font-sans text-xs text-[#A8A29E] mt-1">Floating overlapping card showing fine jewelry, henna, or detail shots.</p>
+                </div>
+
+                <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-black/50 border border-white/10 flex items-center justify-center">
+                  {aboutPhotos.about_detail ? (
+                    <img src={aboutPhotos.about_detail} alt="Detail Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-center p-4">
+                      <Sparkles size={28} className="mx-auto text-white/30 mb-2" />
+                      <span className="font-cinzel text-[10px] text-white/40 uppercase">No image uploaded</span>
+                    </div>
+                  )}
+                  {isUploadingAbout === 'about_detail' && (
+                    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-4 text-center">
+                      <div className="w-8 h-8 border-2 border-[#E64A6E] border-t-transparent rounded-full animate-spin mb-2" />
+                      <span className="font-cinzel text-[10px] text-[#E64A6E]">{aboutUploadProgress}%</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                  <label className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-[#E64A6E] to-[#D8335B] text-white font-cinzel text-[10px] tracking-wider uppercase font-bold hover:scale-[1.02] transition-all cursor-pointer">
+                    <UploadCloud size={13} />
+                    <span>Upload Detail</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleUploadAboutPhoto('about_detail', file);
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                  {aboutPhotos.about_detail && (
+                    <button
+                      onClick={() => handleDeleteAboutPhoto('about_detail', 'Detail Card')}
+                      className="p-2.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 transition-colors cursor-pointer"
+                      title="Remove custom photo"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Card 3: Founder / Lead Artist Avatar */}
+              <div className="bg-[#181614] border border-white/10 rounded-2xl p-5 flex flex-col justify-between space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-cinzel text-[10px] tracking-widest uppercase text-emerald-400 font-bold">03 • Founder Avatar</span>
+                    {aboutPhotos.about_founder ? (
+                      <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono">Live</span>
+                    ) : (
+                      <span className="text-[9px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-mono">Fallback</span>
+                    )}
+                  </div>
+                  <h4 className="font-serif-luxury text-lg text-white font-semibold">Founder Profile Picture</h4>
+                  <p className="font-sans text-xs text-[#A8A29E] mt-1">Circular artist avatar beside "Rishav & Team, Founders & Lead Artists".</p>
+                </div>
+
+                <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-black/50 border border-white/10 flex items-center justify-center p-4">
+                  <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-[#E64A6E] bg-[#F5EFE6] flex items-center justify-center shadow-lg">
+                    {aboutPhotos.about_founder ? (
+                      <img src={aboutPhotos.about_founder} alt="Founder Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="font-serif-luxury text-3xl text-[#E64A6E] font-bold">R</span>
+                    )}
+                  </div>
+                  {isUploadingAbout === 'about_founder' && (
+                    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-4 text-center">
+                      <div className="w-8 h-8 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin mb-2" />
+                      <span className="font-cinzel text-[10px] text-emerald-400">{aboutUploadProgress}%</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                  <label className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-cinzel text-[10px] tracking-wider uppercase font-semibold transition-all cursor-pointer">
+                    <UploadCloud size={13} />
+                    <span>Upload Avatar</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleUploadAboutPhoto('about_founder', file);
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                  {aboutPhotos.about_founder && (
+                    <button
+                      onClick={() => handleDeleteAboutPhoto('about_founder', 'Founder Avatar')}
+                      className="p-2.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 transition-colors cursor-pointer"
+                      title="Remove custom photo"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Card 4: Video Banner Poster */}
+              <div className="bg-[#181614] border border-white/10 rounded-2xl p-5 flex flex-col justify-between space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-cinzel text-[10px] tracking-widest uppercase text-cyan-400 font-bold">04 • Video Poster</span>
+                    {aboutPhotos.video_poster ? (
+                      <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono">Live</span>
+                    ) : (
+                      <span className="text-[9px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-mono">Default</span>
+                    )}
+                  </div>
+                  <h4 className="font-serif-luxury text-lg text-white font-semibold">Cinema Banner Poster</h4>
+                  <p className="font-sans text-xs text-[#A8A29E] mt-1">Placeholder poster image for the Featured Wedding Film background.</p>
+                </div>
+
+                <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-black/50 border border-white/10 flex items-center justify-center">
+                  {aboutPhotos.video_poster ? (
+                    <img src={aboutPhotos.video_poster} alt="Video Poster" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-center p-4">
+                      <Film size={28} className="mx-auto text-white/30 mb-2" />
+                      <span className="font-cinzel text-[10px] text-white/40 uppercase">Default Poster</span>
+                    </div>
+                  )}
+                  {isUploadingAbout === 'video_poster' && (
+                    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-4 text-center">
+                      <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mb-2" />
+                      <span className="font-cinzel text-[10px] text-cyan-400">{aboutUploadProgress}%</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                  <label className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-cinzel text-[10px] tracking-wider uppercase font-semibold transition-all cursor-pointer">
+                    <UploadCloud size={13} />
+                    <span>Upload Poster</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleUploadAboutPhoto('video_poster', file);
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                  {aboutPhotos.video_poster && (
+                    <button
+                      onClick={() => handleDeleteAboutPhoto('video_poster', 'Video Poster')}
+                      className="p-2.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 transition-colors cursor-pointer"
+                      title="Remove custom photo"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {/* TAB: REVIEWS & CLIENT TESTIMONIALS                                      */}
+        {/* ═══════════════════════════════════════════════════════════════════════ */}
+        {activeTab === 'reviews' && (
+          <div className="space-y-8">
+            {/* Header & Add Button */}
+            <div className="bg-[#141210] border border-white/10 rounded-2xl p-6 sm:p-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-serif-luxury text-2xl text-white font-medium">
+                    Client Reviews & Love Stories ({testimonials.length})
+                  </h3>
+                  <p className="font-sans text-xs text-[#A8A29E] mt-1">
+                    Add, edit, or remove couple testimonials. Photos are compressed to WebP and saved directly to Supabase (`fym_testimonials`).
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleResetReviews}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-cinzel text-xs tracking-wider uppercase font-semibold transition-all cursor-pointer"
+                    title="Reset to default initial reviews"
+                  >
+                    <RefreshCw size={13} />
+                    <span>Reset Defaults</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingReviewId(null);
+                      setReviewForm({
+                        name: '',
+                        location: '',
+                        event: 'Destination Wedding',
+                        rating: 5,
+                        image: '',
+                        quote: '',
+                        fullStory: ''
+                      });
+                      setReviewModalOpen(true);
+                    }}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#C5A059] to-[#AA771C] text-[#1C1917] font-cinzel text-xs tracking-wider uppercase font-bold hover:scale-105 transition-all shadow-lg cursor-pointer"
+                  >
+                    <Plus size={15} />
+                    <span>Add New Review</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Testimonials List / Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {testimonials.map((item, idx) => (
+                <div
+                  key={item.id || idx}
+                  className="bg-[#181614] border border-white/10 rounded-2xl p-6 flex flex-col justify-between space-y-4 hover:border-[#C5A059]/40 transition-all shadow-sm"
+                >
+                  <div className="space-y-3">
+                    {/* Top row: Couple Avatar & Names */}
+                    <div className="flex items-start gap-3.5">
+                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex-shrink-0 flex items-center justify-center">
+                        {item.image ? (
+                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+                        ) : (
+                          <span className="font-serif-luxury text-xl text-[#C5A059] font-bold">
+                            {item.name ? item.name.charAt(0) : '✦'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <h4 className="font-serif-luxury text-lg text-white font-semibold truncate">
+                            {item.name}
+                          </h4>
+                          <div className="flex items-center gap-0.5 text-[#C5A059]">
+                            {[...Array(item.rating || 5)].map((_, i) => (
+                              <Star key={i} size={11} className="fill-current" />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="font-sans text-xs text-[#A8A29E] truncate">{item.location || 'India'}</p>
+                        <span className="inline-block font-cinzel text-[9px] tracking-wider uppercase text-[#E64A6E] font-semibold mt-0.5">
+                          ✦ {item.event || 'Wedding'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Quote */}
+                    <p className="font-sans text-xs text-white/80 leading-relaxed italic line-clamp-3 pt-2 border-t border-white/5">
+                      "{item.quote}"
+                    </p>
+                  </div>
+
+                  {/* Footer Actions */}
+                  <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                    <span className="font-mono text-[10px] text-white/40">#{idx + 1}</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleOpenEditReview(item)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-cinzel text-[10px] tracking-wider uppercase transition-colors cursor-pointer"
+                      >
+                        <Edit3 size={11} />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteReview(item.id, item.name)}
+                        className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 transition-colors cursor-pointer"
+                        title="Delete Review"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Add / Edit Review Modal */}
+            <AnimatePresence>
+              {reviewModalOpen && (
+                <div
+                  className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+                  onClick={() => setReviewModalOpen(false)}
+                >
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="bg-[#181614] border border-white/15 rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 text-white shadow-2xl my-8"
+                  >
+                    <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                      <div>
+                        <h3 className="font-serif-luxury text-2xl text-white font-semibold">
+                          {editingReviewId ? 'Edit Review' : 'Add Client Review'}
+                        </h3>
+                        <p className="font-sans text-xs text-[#A8A29E]">
+                          Client testimonial synced across Supabase & LocalStorage
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setReviewModalOpen(false)}
+                        className="p-2 rounded-full hover:bg-white/10 text-white/60 hover:text-white transition-colors cursor-pointer"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+
+                    <form onSubmit={handleSaveReview} className="space-y-4">
+                      {/* Couple Photo Upload with Compressor */}
+                      <div>
+                        <label className="font-cinzel text-[10px] tracking-widest text-[#C5A059] uppercase block mb-1.5 font-bold">
+                          Couple Photo (Auto-compressed to WebP)
+                        </label>
+                        <div className="flex items-center gap-4 p-3 bg-black/30 rounded-2xl border border-white/10">
+                          <div className="w-16 h-16 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex-shrink-0 flex items-center justify-center">
+                            {reviewForm.image ? (
+                              <img src={reviewForm.image} alt="Preview" className="w-full h-full object-cover" />
+                            ) : (
+                              <User size={24} className="text-white/30" />
+                            )}
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-cinzel text-[10px] tracking-wider uppercase font-semibold transition-all cursor-pointer">
+                              <UploadCloud size={13} />
+                              <span>{isUploadingReviewImg ? 'Compressing & Uploading...' : 'Upload Couple Photo'}</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                disabled={isUploadingReviewImg}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleReviewPhotoSelected(file);
+                                  e.target.value = '';
+                                }}
+                              />
+                            </label>
+                            {isUploadingReviewImg && (
+                              <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                                <div className="bg-[#C5A059] h-full transition-all duration-300" style={{ width: `${reviewImgProgress}%` }} />
+                              </div>
+                            )}
+                            {reviewForm.image && !isUploadingReviewImg && (
+                              <p className="text-[10px] text-emerald-400 font-mono truncate">✓ Photo attached</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Row 1: Couple Names & Rating */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="sm:col-span-2">
+                          <label className="font-cinzel text-[10px] tracking-widest text-white/70 uppercase block mb-1">
+                            Couple Names *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. Supriya & Rohan"
+                            value={reviewForm.name}
+                            onChange={(e) => setReviewForm({ ...reviewForm, name: e.target.value })}
+                            className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:border-[#C5A059] focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="font-cinzel text-[10px] tracking-widest text-white/70 uppercase block mb-1">
+                            Rating
+                          </label>
+                          <select
+                            value={reviewForm.rating}
+                            onChange={(e) => setReviewForm({ ...reviewForm, rating: Number(e.target.value) })}
+                            className="w-full bg-black/40 border border-white/15 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#C5A059] focus:outline-none cursor-pointer"
+                          >
+                            <option value="5">★★★★★ (5.0)</option>
+                            <option value="4">★★★★☆ (4.0)</option>
+                            <option value="3">★★★☆☆ (3.0)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Row 2: Location & Event Type */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="font-cinzel text-[10px] tracking-widest text-white/70 uppercase block mb-1">
+                            Location
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Toronto, Canada or Jaipur, India"
+                            value={reviewForm.location}
+                            onChange={(e) => setReviewForm({ ...reviewForm, location: e.target.value })}
+                            className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:border-[#C5A059] focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="font-cinzel text-[10px] tracking-widest text-white/70 uppercase block mb-1">
+                            Event Type
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Destination Wedding, Royal Palace Wedding"
+                            value={reviewForm.event}
+                            onChange={(e) => setReviewForm({ ...reviewForm, event: e.target.value })}
+                            className="w-full bg-black/40 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white focus:border-[#C5A059] focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Short Quote */}
+                      <div>
+                        <label className="font-cinzel text-[10px] tracking-widest text-white/70 uppercase block mb-1">
+                          Short Quote (Card Display) *
+                        </label>
+                        <textarea
+                          rows={3}
+                          required
+                          placeholder="A quick 2-3 sentence quote that appears directly on the card..."
+                          value={reviewForm.quote}
+                          onChange={(e) => setReviewForm({ ...reviewForm, quote: e.target.value })}
+                          className="w-full bg-black/40 border border-white/15 rounded-xl p-3 text-sm text-white focus:border-[#C5A059] focus:outline-none leading-relaxed"
+                        />
+                      </div>
+
+                      {/* Full Story */}
+                      <div>
+                        <label className="font-cinzel text-[10px] tracking-widest text-white/70 uppercase block mb-1">
+                          Full Story (Modal Display)
+                        </label>
+                        <textarea
+                          rows={4}
+                          placeholder="Detailed story shown when a visitor clicks 'Read Full Story'..."
+                          value={reviewForm.fullStory}
+                          onChange={(e) => setReviewForm({ ...reviewForm, fullStory: e.target.value })}
+                          className="w-full bg-black/40 border border-white/15 rounded-xl p-3 text-sm text-white focus:border-[#C5A059] focus:outline-none leading-relaxed"
+                        />
+                      </div>
+
+                      {/* Buttons */}
+                      <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+                        <button
+                          type="button"
+                          onClick={() => setReviewModalOpen(false)}
+                          className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-cinzel text-xs tracking-wider uppercase transition-colors cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#C5A059] to-[#AA771C] text-[#1C1917] font-cinzel text-xs tracking-wider uppercase font-bold hover:scale-105 transition-all shadow-lg cursor-pointer"
+                        >
+                          {editingReviewId ? 'Update Review' : 'Save Review'}
+                        </button>
+                      </div>
+                    </form>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 

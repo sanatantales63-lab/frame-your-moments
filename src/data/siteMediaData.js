@@ -180,3 +180,82 @@ export async function resetGridPhotos() {
   }
   return [];
 }
+
+// ─── ABOUT SECTION & SITE IMAGES GETTERS & SETTERS ───────────────────────────
+export const DEFAULT_ABOUT_PHOTOS = {
+  about_main: '',
+  about_detail: '',
+  about_founder: '',
+  video_poster: ''
+};
+
+export async function getAboutPhotos() {
+  try {
+    const { data, error } = await supabase.from('fym_media').select('*');
+    if (!error && Array.isArray(data)) {
+      const aboutItems = data.filter((item) => item.section === 'about');
+      if (aboutItems.length > 0) {
+        const photos = { ...DEFAULT_ABOUT_PHOTOS };
+        aboutItems.forEach((item) => {
+          const key = item.category || item.meta?.key;
+          if (key) {
+            photos[key] = item.url || item.src || '';
+          }
+        });
+        localStorage.setItem('fym_about_photos', JSON.stringify(photos));
+        return photos;
+      }
+    }
+  } catch (e) {
+    console.warn('Supabase fetch failed for about photos', e);
+  }
+
+  try {
+    const cached = localStorage.getItem('fym_about_photos');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed && typeof parsed === 'object') {
+        return { ...DEFAULT_ABOUT_PHOTOS, ...parsed };
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  return DEFAULT_ABOUT_PHOTOS;
+}
+
+export async function saveAboutPhoto(key, photoData) {
+  try {
+    // 1. Update localStorage
+    const current = await getAboutPhotos();
+    const updated = { ...current, [key]: photoData.url || photoData.src };
+    localStorage.setItem('fym_about_photos', JSON.stringify(updated));
+
+    // 2. Sync to Supabase
+    try {
+      await supabase.from('fym_media').delete('category', key);
+    } catch (err) {
+      // ignore
+    }
+
+    const row = {
+      section: 'about',
+      category: key,
+      url: photoData.url || photoData.src,
+      caption: photoData.caption || key,
+      meta: { key, title: photoData.title || key },
+      is_compressed: photoData.isCompressed || false,
+      original_size: photoData.originalSize || 0,
+      compressed_size: photoData.compressedSize || 0
+    };
+
+    const { data, error } = await supabase.from('fym_media').insert([row]);
+    if (error) console.warn('Supabase insert about photo warning:', error);
+    return { success: !error, data };
+  } catch (e) {
+    console.error('Error saving about photo:', e);
+    return { success: false, error: e };
+  }
+}
+

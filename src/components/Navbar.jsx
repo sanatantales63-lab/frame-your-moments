@@ -129,37 +129,39 @@ export default function Navbar({ onNavigateToVideos, onNavigateToAdmin, onNaviga
             </div>
 
             {/* Menu body */}
-            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+            <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
               {/* Left: Links */}
-              <div className="flex-1 flex flex-col justify-center px-8 sm:px-14 lg:px-20 py-10 space-y-1">
-                {navLinks.map((link, i) => (
-                  <motion.a
-                    key={link.label}
-                    href={link.href || '#'}
-                    onClick={(e) => {
-                      if (link.isVideosLink) {
-                        e.preventDefault();
-                        setMenuOpen(false);
-                        if (onNavigateToVideos) onNavigateToVideos();
-                      } else if (link.isBlogsLink) {
-                        e.preventDefault();
-                        setMenuOpen(false);
-                        if (onNavigateToBlogs) onNavigateToBlogs();
-                      } else {
-                        setMenuOpen(false);
-                      }
-                    }}
-                    initial={{ x: -30, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: 0.08 + i * 0.06, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                    className="group flex items-center gap-4 py-3 sm:py-4 border-b border-[#E8DFD1] hover:border-[#C5A059] transition-colors duration-300 cursor-pointer"
-                  >
-                    <span className="font-cinzel text-[10px] text-[#B0A898] w-6">0{i + 1}</span>
-                    <span className="font-serif-luxury text-4xl sm:text-5xl lg:text-6xl font-light text-[#1C1917] group-hover:text-[#C5A059] group-hover:translate-x-3 inline-block transition-all duration-300">
-                      {link.label}
-                    </span>
-                  </motion.a>
-                ))}
+              <div className="flex-1 flex flex-col min-h-0 overflow-y-auto px-8 sm:px-14 lg:px-20 py-6 sm:py-10">
+                <div className="my-auto space-y-1">
+                  {navLinks.map((link, i) => (
+                    <motion.a
+                      key={link.label}
+                      href={link.href || '#'}
+                      onClick={(e) => {
+                        if (link.isVideosLink) {
+                          e.preventDefault();
+                          setMenuOpen(false);
+                          if (onNavigateToVideos) onNavigateToVideos();
+                        } else if (link.isBlogsLink) {
+                          e.preventDefault();
+                          setMenuOpen(false);
+                          if (onNavigateToBlogs) onNavigateToBlogs();
+                        } else {
+                          setMenuOpen(false);
+                        }
+                      }}
+                      initial={{ x: -30, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: 0.08 + i * 0.06, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                      className="group flex items-center gap-4 py-3 sm:py-4 border-b border-[#E8DFD1] hover:border-[#C5A059] transition-colors duration-300 cursor-pointer"
+                    >
+                      <span className="font-cinzel text-[10px] text-[#B0A898] w-6">0{i + 1}</span>
+                      <span className="font-serif-luxury text-4xl sm:text-5xl lg:text-6xl font-light text-[#1C1917] group-hover:text-[#C5A059] group-hover:translate-x-3 inline-block transition-all duration-300">
+                        {link.label}
+                      </span>
+                    </motion.a>
+                  ))}
+                </div>
               </div>
 
               {/* Right: Info */}
@@ -167,7 +169,7 @@ export default function Navbar({ onNavigateToVideos, onNavigateToAdmin, onNaviga
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.35, duration: 0.5 }}
-                className="hidden lg:flex flex-col justify-between w-80 xl:w-96 border-l border-[#E8DFD1] px-10 py-12"
+                className="hidden lg:flex flex-col justify-between w-80 xl:w-96 border-l border-[#E8DFD1] px-10 py-12 min-h-0 overflow-y-auto"
               >
                 <div className="space-y-8">
                   <div>
