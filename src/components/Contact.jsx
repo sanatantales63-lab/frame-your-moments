@@ -49,7 +49,7 @@ const REAL_PACKAGES = [
     group: '✨ Custom & Destinations',
     options: [
       'Custom Destination Wedding (India / Abroad)',
-      'General Muhurat Date Check & Consultation'
+      'Wedding Date Availability & Consultation'
     ]
   }
 ];
@@ -58,9 +58,9 @@ const LOCATIONS = [
   'Kolkata & West Bengal',
   'Rajasthan (Jaipur / Udaipur / Jodhpur)',
   'Goa / Beach Destinations',
-  'Delhi NCR / North India',
-  'Dubai / UAE / International Destination',
-  'Other City / State'
+  'Delhi NCR & North India',
+  'International / Overseas Destination',
+  'Other Location (Specify Below)'
 ];
 
 export default function Contact() {
@@ -83,8 +83,9 @@ export default function Contact() {
 
   const handleWhatsAppSubmit = (e) => {
     e.preventDefault();
+
     if (!formData.name.trim() || !formData.phone.trim()) {
-      alert('Please fill in your name and WhatsApp contact number.');
+      alert('Please fill in your name and phone number.');
       return;
     }
 
@@ -102,19 +103,25 @@ export default function Contact() {
       // ignore
     }
 
-    const waText = 
-`👑 *NEW WEDDING INQUIRY - FRAME YOUR MOMENTS* 👑
+    // Clean package text from special unicode symbols (like Rupee symbol or em-dash) that cause question mark corruption in WhatsApp
+    const cleanPackage = formData.packageChoice
+      ? formData.packageChoice.replace(/₹/g, 'Rs. ').replace(/[—–]/g, '-').trim()
+      : '';
 
-👤 *Client / Couple:* ${formData.name}
-📞 *WhatsApp:* ${formData.phone}
-📅 *Wedding / Event Date:* ${formData.eventDate || 'To be decided'}
-📦 *Selected Package:* ${formData.packageChoice}
-📍 *Event City / Venue:* ${formData.location}
-💬 *Note / Vision:* ${formData.message || 'Standard Inquiry'}
+    const waText = [
+      '*NEW WEDDING INQUIRY - FRAME YOUR MOMENTS*',
+      '',
+      `- *Client / Couple:* ${formData.name}`,
+      `- *WhatsApp:* ${formData.phone}`,
+      `- *Wedding / Event Date:* ${formData.eventDate || 'To be decided'}`,
+      `- *Selected Package:* ${cleanPackage}`,
+      `- *Event City / Venue:* ${formData.location}`,
+      `- *Note / Vision:* ${formData.message || 'Standard Inquiry'}`,
+      '',
+      '_Submitted via frameyourmoments.in_'
+    ].join('\n');
 
-_Submitted via official studio website (frameyourmoments.in)_`;
-
-    const waUrl = `https://wa.me/918013346138?text=${encodeURIComponent(waText)}`;
+    const waUrl = `https://api.whatsapp.com/send?phone=918013346138&text=${encodeURIComponent(waText)}`;
 
     setTimeout(() => {
       setLoading(false);
@@ -187,7 +194,7 @@ _Submitted via official studio website (frameyourmoments.in)_`;
           </motion.h2>
 
           <p className="font-sans text-[#57534E] max-w-xl text-xs sm:text-sm leading-relaxed">
-            Reserve your muhurat dates with Lead Artist Rishav. Fill in your details below for instant WhatsApp package discussion.
+            Reserve your wedding dates with Lead Artist Rishav. Fill in your details below for instant WhatsApp package discussion.
           </p>
         </div>
 
@@ -209,10 +216,10 @@ _Submitted via official studio website (frameyourmoments.in)_`;
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#E8DFD1]/70">
               <div>
                 <span className="font-cinzel text-[10px] tracking-[0.22em] uppercase font-bold text-[#C5A059] block mb-0.5">
-                  Direct Studio Inquiry
+                  Direct Booking Inquiry
                 </span>
                 <h3 className="font-serif-luxury text-2xl sm:text-3xl text-[#1C1917] font-medium leading-tight">
-                  Check Muhurat & Date Availability
+                  Check Wedding Date & Availability
                 </h3>
               </div>
 
@@ -220,7 +227,7 @@ _Submitted via official studio website (frameyourmoments.in)_`;
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-[#FAF7F2] border border-[#C5A059]/40 shadow-xs shrink-0">
                 <Camera size={15} className="text-[#C5A059]" />
                 <span className="font-cinzel text-[9px] tracking-wider uppercase font-bold text-[#1C1917]">
-                  Studio FYM
+                  Official FYM
                 </span>
               </div>
             </div>
@@ -394,7 +401,7 @@ _Submitted via official studio website (frameyourmoments.in)_`;
 
           </motion.div>
 
-          {/* ──── RIGHT: Studio Concierge & 3-Step Process (5 Cols) ──── */}
+          {/* ── RIGHT: Wedding Concierge & 3-Step Process (5 Cols) ── */}
           <motion.div
             initial={{ opacity: 0, y: 35, filter: 'blur(6px)' }}
             whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
@@ -403,19 +410,19 @@ _Submitted via official studio website (frameyourmoments.in)_`;
             className="lg:col-span-5 space-y-5"
           >
             
-            {/* ── Studio Concierge Card ── */}
+            {/* ── Wedding Concierge Card ── */}
             <div className="bg-gradient-to-br from-[#1C1917] via-[#2A2421] to-[#141210] text-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-white/10 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-44 h-44 bg-[#C5A059]/15 rounded-full blur-2xl pointer-events-none" />
 
               <div className="flex items-center gap-2 mb-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#C5A059] animate-pulse" />
                 <span className="font-cinzel text-[10px] tracking-[0.25em] uppercase text-[#C5A059] font-bold">
-                  Studio Concierge
+                  Wedding Concierge
                 </span>
               </div>
               
               <h4 className="font-serif-luxury text-xl sm:text-2xl font-light mb-5 text-[#FAF7F2]">
-                Prefer a Direct Call or Studio Visit?
+                Prefer a Direct Call or Personal Meet?
               </h4>
 
               <div className="space-y-3">
@@ -437,30 +444,61 @@ _Submitted via official studio website (frameyourmoments.in)_`;
 
                 {/* Email */}
                 <a
-                  href="mailto:hello@frameyourmoments.in"
+                  href="mailto:frameyourmoments2018@gmail.com"
                   className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[#C5A059]/50 transition-all group"
                 >
                   <div className="w-10 h-10 rounded-xl bg-[#E64A6E]/20 border border-[#E64A6E]/40 flex items-center justify-center text-[#FFA0B8] group-hover:scale-110 transition-transform shrink-0">
                     <Mail size={17} />
                   </div>
-                  <div>
-                    <span className="font-cinzel text-[9px] tracking-wider uppercase text-[#B0A898] block">Studio Email</span>
-                    <span className="font-sans text-xs sm:text-sm font-semibold text-white group-hover:text-[#E64A6E] transition-colors">hello@frameyourmoments.in</span>
+                  <div className="min-w-0">
+                    <span className="font-cinzel text-[9px] tracking-wider uppercase text-[#B0A898] block">Official Email</span>
+                    <span className="font-sans text-xs sm:text-sm font-semibold text-white group-hover:text-[#E64A6E] transition-colors truncate block">frameyourmoments2018@gmail.com</span>
                   </div>
                 </a>
 
-                {/* Studio Location */}
-                <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/5 border border-white/10">
-                  <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-[#C5A059] shrink-0 mt-0.5">
+                {/* Office Location */}
+                <a
+                  href="https://www.google.com/maps/search/52+Mukundapur,+Kolkata-700099,+West+Bengal?entry=gmail&source=g"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[#C5A059]/50 transition-all group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-[#C5A059] group-hover:scale-110 transition-transform shrink-0 mt-0.5">
                     <MapPin size={17} />
                   </div>
                   <div>
-                    <span className="font-cinzel text-[9px] tracking-wider uppercase text-[#B0A898] block">Head Studio</span>
-                    <span className="font-sans text-xs sm:text-sm text-[#E8DFD1] leading-relaxed block">
-                      Kolkata, West Bengal, India<br />
+                    <div className="flex items-center justify-between">
+                      <span className="font-cinzel text-[9px] tracking-wider uppercase text-[#B0A898] block">Main Office / Address</span>
+                      <span className="text-[10px] text-[#C5A059] font-cinzel opacity-0 group-hover:opacity-100 transition-opacity">View on Map ↗</span>
+                    </div>
+                    <span className="font-sans text-xs sm:text-sm text-[#E8DFD1] leading-relaxed block group-hover:text-white transition-colors">
+                      6B/52 Mukundapur, Kolkata-700099, West Bengal<br />
                       <span className="text-[#C5A059]/90 text-[11px]">Available across India & Worldwide</span>
                     </span>
                   </div>
+                </a>
+
+                {/* Direct Social Links */}
+                <div className="grid grid-cols-2 gap-2.5 pt-1">
+                  <a
+                    href="https://www.instagram.com/frameyourmomentsofficial?stkn=eDNocDh2Z2t0d2s%3D&utm_source=qr"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-[#E64A6E]/20 border border-white/10 hover:border-[#E64A6E]/50 text-white font-cinzel text-[10px] tracking-wider uppercase transition-all group"
+                  >
+                    <svg className="w-3.5 h-3.5 text-[#E64A6E] group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+                    <span>Instagram</span>
+                  </a>
+
+                  <a
+                    href="https://www.facebook.com/share/1BjgBWk76r/?mibextid=wwXIfr"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white/5 hover:bg-[#1877F2]/20 border border-white/10 hover:border-[#1877F2]/50 text-white font-cinzel text-[10px] tracking-wider uppercase transition-all group"
+                  >
+                    <svg className="w-3.5 h-3.5 text-[#1877F2] group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    <span>Facebook</span>
+                  </a>
                 </div>
               </div>
             </div>
@@ -479,7 +517,7 @@ _Submitted via official studio website (frameyourmoments.in)_`;
                   {
                     step: '01',
                     title: 'Date Check & WhatsApp Chat',
-                    desc: 'We verify muhurat availability and discuss your vision.'
+                    desc: 'We verify wedding date availability and discuss your vision.'
                   },
                   {
                     step: '02',

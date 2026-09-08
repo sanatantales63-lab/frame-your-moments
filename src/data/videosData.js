@@ -115,7 +115,7 @@ export async function fetchReelsFromSupabase() {
  */
 export async function deleteFilmFromSupabase(id) {
   try {
-    await supabase.from('fym_wedding_films').delete('id', id);
+    await supabase.from('fym_wedding_films').delete().eq('id', id);
   } catch (e) {
     console.warn('Supabase delete film error', e);
   }
@@ -126,8 +126,30 @@ export async function deleteFilmFromSupabase(id) {
  */
 export async function deleteReelFromSupabase(id) {
   try {
-    await supabase.from('fym_wedding_reels').delete('id', id);
+    await supabase.from('fym_wedding_reels').delete().eq('id', id);
   } catch (e) {
     console.warn('Supabase delete reel error', e);
+  }
+}
+
+/**
+ * Update a film in Supabase by its UUID id.
+ */
+export async function updateFilmInSupabase(id, filmData) {
+  try {
+    await supabase.from('fym_wedding_films').update(filmData).eq('id', id);
+  } catch (e) {
+    console.warn('Supabase update film error', e);
+  }
+}
+
+/**
+ * Update a reel in Supabase by its UUID id.
+ */
+export async function updateReelInSupabase(id, reelData) {
+  try {
+    await supabase.from('fym_wedding_reels').update(reelData).eq('id', id);
+  } catch (e) {
+    console.warn('Supabase update reel error', e);
   }
 }

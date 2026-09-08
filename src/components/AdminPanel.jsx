@@ -73,7 +73,9 @@ import {
   fetchFilmsFromSupabase,
   fetchReelsFromSupabase,
   deleteFilmFromSupabase,
-  deleteReelFromSupabase
+  deleteReelFromSupabase,
+  updateFilmInSupabase,
+  updateReelInSupabase
 } from '../data/videosData';
 import {
   getHeroPhotos,
@@ -323,6 +325,12 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
     instaCode: '',
     category: 'Wedding Moments'
   });
+
+  const [editingVideoId, setEditingVideoId] = useState(null);
+  const [isUploadingVideoThumb, setIsUploadingVideoThumb] = useState(false);
+  const [videoThumbProgress, setVideoThumbProgress] = useState(0);
+  const [videoThumbStatus, setVideoThumbStatus] = useState('');
+  const videoThumbInputRef = useRef(null);
 
   // ── Blogs & Editorial Journal State ──
   const [blogs, setBlogs] = useState(getBlogsFromLocal);
@@ -825,78 +833,221 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
     await deleteGridPhoto(item);
   };
 
-  // ── Add New Film Handler ──
+  // ── Handle Video/Reel Thumbnail Upload with Smart Compression ──
+  const handleThumbnailSelected = async (file, type = 'reel') => {
+    if (!file) return;
+    setIsUploadingVideoThumb(true);
+    setVideoThumbProgress(20);
+    setVideoThumbStatus(`Compressing & optimizing ${file.name}...`);
+
+    try {
+      // Smart Client-Side Compression (threshold: compresses if > 500KB)
+      const compressionResult = await compressImage(file, {
+        maxSizeKB: 500,
+        quality: 0.85
+      });
+
+      setVideoThumbProgress(50);
+      setVideoThumbStatus(
+        compressionResult.wasCompressed
+          ? `Compressed (${formatBytes(compressionResult.originalSize)} → ${formatBytes(compressionResult.compressedSize)}). Uploading...`
+          : 'Uploading to Cloudinary...'
+      );
+
+      // Direct Cloudinary Upload
+      const uploadRes = await uploadToCloudinary(compressionResult.file, {
+        onProgress: (percent) => {
+          setVideoThumbProgress(50 + Math.round(percent * 0.45));
+        }
+      });
+
+      if (uploadRes.success) {
+        if (type === 'film') {
+          setFilmForm((prev) => ({ ...prev, thumbnail: uploadRes.url }));
+        } else {
+          setReelForm((prev) => ({ ...prev, thumbnail: uploadRes.url }));
+        }
+        setVideoThumbProgress(100);
+        setVideoThumbStatus('Thumbnail uploaded successfully!');
+      } else {
+        alert('Failed to upload thumbnail. Please check network connection.');
+      }
+    } catch (err) {
+      console.error('Thumbnail upload error:', err);
+      alert('Upload failed: ' + (err.message || 'Unknown error'));
+    } finally {
+      setTimeout(() => {
+        setIsUploadingVideoThumb(false);
+        setVideoThumbProgress(0);
+        setVideoThumbStatus('');
+      }, 1000);
+    }
+  };
+
+  // ── Edit Film Handler ──
+  const handleEditFilm = (film) => {
+    setEditingVideoId(film.id);
+    setVideoFormType('film');
+    setFilmForm({
+      title: film.title || '',
+      couple: film.couple || '',
+      category: film.category || 'wedding_films',
+      categoryLabel: film.categoryLabel || 'Wedding Film',
+      duration: film.duration || '4:15',
+      location: film.location || '',
+      thumbnail: film.thumbnail || '',
+      videoUrl: film.videoUrl || '/featured_wedding_film.mp4',
+      youtubeId: film.youtubeId || '',
+      description: film.description || '',
+      featured: film.featured || false
+    });
+    setVideoModalOpen(true);
+  };
+
+  // ── Edit Reel Handler ──
+  const handleEditReel = (reel) => {
+    setEditingVideoId(reel.id);
+    setVideoFormType('reel');
+    setReelForm({
+      title: reel.title || '',
+      couple: reel.couple || '',
+      duration: reel.duration || '0:45',
+      views: reel.views || '120K',
+      thumbnail: reel.thumbnail || '',
+      videoUrl: reel.videoUrl || '/featured_wedding_film.mp4',
+      youtubeId: reel.youtubeId || '',
+      instaCode: reel.instaCode || '',
+      category: reel.category || 'Wedding Moments'
+    });
+    setVideoModalOpen(true);
+  };
+
+  // ── Save Film Handler (Add or Update) ──
   const handleSaveFilm = async (e) => {
     e.preventDefault();
     const ytId = extractYouTubeId(filmForm.youtubeId);
-    const newFilm = {
-      id: `film-${Date.now()}`,
-      ...filmForm,
-      youtubeId: ytId || filmForm.youtubeId,
-      thumbnail: filmForm.thumbnail || ''
-    };
 
-    const updated = [newFilm, ...films];
-    setFilms(updated);
-    saveStoredFilms(updated);
+    if (editingVideoId) {
+      const updatedFilm = {
+        id: editingVideoId,
+        ...filmForm,
+        youtubeId: ytId || filmForm.youtubeId,
+        thumbnail: filmForm.thumbnail || ''
+      };
 
-    // Save to Supabase
-    try {
-      await supabase.from('fym_wedding_films').insert({
-        title: newFilm.title,
-        couple: newFilm.couple,
-        category: newFilm.category,
-        category_label: newFilm.categoryLabel,
-        duration: newFilm.duration,
-        location: newFilm.location,
-        thumbnail: newFilm.thumbnail,
-        video_url: newFilm.videoUrl,
-        youtube_id: newFilm.youtubeId,
-        description: newFilm.description,
-        featured: newFilm.featured
+      const updated = films.map((f) => (f.id === editingVideoId ? updatedFilm : f));
+      setFilms(updated);
+      saveStoredFilms(updated);
+
+      await updateFilmInSupabase(editingVideoId, {
+        title: updatedFilm.title,
+        couple: updatedFilm.couple,
+        category: updatedFilm.category,
+        category_label: updatedFilm.categoryLabel,
+        duration: updatedFilm.duration,
+        location: updatedFilm.location,
+        thumbnail: updatedFilm.thumbnail,
+        video_url: updatedFilm.videoUrl,
+        youtube_id: updatedFilm.youtubeId,
+        description: updatedFilm.description,
+        featured: updatedFilm.featured
       });
-    } catch (e) {
-      console.warn('Supabase film insert error', e);
+    } else {
+      const newFilm = {
+        id: `film-${Date.now()}`,
+        ...filmForm,
+        youtubeId: ytId || filmForm.youtubeId,
+        thumbnail: filmForm.thumbnail || ''
+      };
+
+      const updated = [newFilm, ...films];
+      setFilms(updated);
+      saveStoredFilms(updated);
+
+      try {
+        await supabase.from('fym_wedding_films').insert({
+          title: newFilm.title,
+          couple: newFilm.couple,
+          category: newFilm.category,
+          category_label: newFilm.categoryLabel,
+          duration: newFilm.duration,
+          location: newFilm.location,
+          thumbnail: newFilm.thumbnail,
+          video_url: newFilm.videoUrl,
+          youtube_id: newFilm.youtubeId,
+          description: newFilm.description,
+          featured: newFilm.featured
+        });
+      } catch (e) {
+        console.warn('Supabase film insert error', e);
+      }
     }
 
+    setEditingVideoId(null);
     setVideoModalOpen(false);
   };
 
-  // ── Add New Reel Handler ──
+  // ── Save Reel Handler (Add or Update) ──
   const handleSaveReel = async (e) => {
     e.preventDefault();
     const ytId = extractYouTubeId(reelForm.youtubeId);
     const instaCode = extractInstagramCode(reelForm.instaCode);
 
-    const newReel = {
-      id: `reel-${Date.now()}`,
-      ...reelForm,
-      youtubeId: ytId || reelForm.youtubeId,
-      instaCode: instaCode || reelForm.instaCode,
-      thumbnail: reelForm.thumbnail || ''
-    };
+    if (editingVideoId) {
+      const updatedReel = {
+        id: editingVideoId,
+        ...reelForm,
+        youtubeId: ytId || reelForm.youtubeId,
+        instaCode: instaCode || reelForm.instaCode,
+        thumbnail: reelForm.thumbnail || ''
+      };
 
-    const updated = [newReel, ...reels];
-    setReels(updated);
-    saveStoredReels(updated);
+      const updated = reels.map((r) => (r.id === editingVideoId ? updatedReel : r));
+      setReels(updated);
+      saveStoredReels(updated);
 
-    // Save to Supabase
-    try {
-      await supabase.from('fym_wedding_reels').insert({
-        title: newReel.title,
-        couple: newReel.couple,
-        duration: newReel.duration,
-        views: newReel.views,
-        thumbnail: newReel.thumbnail,
-        video_url: newReel.videoUrl,
-        youtube_id: newReel.youtubeId,
-        insta_code: newReel.instaCode,
-        category: newReel.category
+      await updateReelInSupabase(editingVideoId, {
+        title: updatedReel.title,
+        couple: updatedReel.couple,
+        duration: updatedReel.duration,
+        views: updatedReel.views,
+        thumbnail: updatedReel.thumbnail,
+        video_url: updatedReel.videoUrl,
+        youtube_id: updatedReel.youtubeId,
+        insta_code: updatedReel.instaCode,
+        category: updatedReel.category
       });
-    } catch (e) {
-      console.warn('Supabase reel insert error', e);
+    } else {
+      const newReel = {
+        id: `reel-${Date.now()}`,
+        ...reelForm,
+        youtubeId: ytId || reelForm.youtubeId,
+        instaCode: instaCode || reelForm.instaCode,
+        thumbnail: reelForm.thumbnail || ''
+      };
+
+      const updated = [newReel, ...reels];
+      setReels(updated);
+      saveStoredReels(updated);
+
+      try {
+        await supabase.from('fym_wedding_reels').insert({
+          title: newReel.title,
+          couple: newReel.couple,
+          duration: newReel.duration,
+          views: newReel.views,
+          thumbnail: newReel.thumbnail,
+          video_url: newReel.videoUrl,
+          youtube_id: newReel.youtubeId,
+          insta_code: newReel.instaCode,
+          category: newReel.category
+        });
+      } catch (e) {
+        console.warn('Supabase reel insert error', e);
+      }
     }
 
+    setEditingVideoId(null);
     setVideoModalOpen(false);
   };
 
@@ -2901,6 +3052,20 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => {
+                    setEditingVideoId(null);
+                    setFilmForm({
+                      title: '',
+                      couple: '',
+                      category: 'wedding_films',
+                      categoryLabel: 'Wedding Film',
+                      duration: '4:15',
+                      location: 'Kolkata, India',
+                      thumbnail: '',
+                      videoUrl: '/featured_wedding_film.mp4',
+                      youtubeId: '',
+                      description: '',
+                      featured: false
+                    });
                     setVideoFormType('film');
                     setVideoModalOpen(true);
                   }}
@@ -2912,6 +3077,18 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
 
                 <button
                   onClick={() => {
+                    setEditingVideoId(null);
+                    setReelForm({
+                      title: '',
+                      couple: '',
+                      duration: '0:45',
+                      views: '120K',
+                      thumbnail: '',
+                      videoUrl: '/featured_wedding_film.mp4',
+                      youtubeId: '',
+                      instaCode: '',
+                      category: 'Wedding Moments'
+                    });
                     setVideoFormType('reel');
                     setVideoModalOpen(true);
                   }}
@@ -2941,12 +3118,22 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
                           <Play size={20} className="fill-current ml-0.5" />
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleDeleteFilm(film.id)}
-                        className="absolute top-3 right-3 p-2 bg-red-600/80 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <div className="absolute top-3 right-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => handleEditFilm(film)}
+                          className="p-2 bg-[#C5A059] hover:bg-[#AA771C] text-[#1C1917] rounded-full transition-colors cursor-pointer shadow-md"
+                          title="Edit Film"
+                        >
+                          <Edit3 size={13} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteFilm(film.id)}
+                          className="p-2 bg-red-600/80 hover:bg-red-600 text-white rounded-full transition-colors cursor-pointer shadow-md"
+                          title="Delete Film"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="p-5 space-y-2">
@@ -2989,12 +3176,22 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
                           <span className="px-2 py-0.5 rounded bg-black/60 text-[9px] font-mono text-white">
                             {reel.views}
                           </span>
-                          <button
-                            onClick={() => handleDeleteReel(reel.id)}
-                            className="p-1.5 bg-red-600 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                          >
-                            <Trash2 size={12} />
-                          </button>
+                          <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => handleEditReel(reel)}
+                              className="p-1.5 bg-[#E64A6E] hover:bg-[#c93255] text-white rounded-full transition-colors cursor-pointer shadow-md"
+                              title="Edit Reel"
+                            >
+                              <Edit3 size={11} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteReel(reel.id)}
+                              className="p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors cursor-pointer shadow-md"
+                              title="Delete Reel"
+                            >
+                              <Trash2 size={11} />
+                            </button>
+                          </div>
                         </div>
 
                         <div>
@@ -3066,16 +3263,41 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
               className="w-full max-w-xl bg-[#141210] border border-white/15 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto"
             >
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                <h3 className="font-serif-luxury text-2xl text-white font-medium">
-                  {videoFormType === 'film' ? 'Add 4K Wedding Film' : 'Add Quick Reel'}
-                </h3>
+                <div>
+                  <h3 className="font-serif-luxury text-2xl text-white font-medium">
+                    {videoFormType === 'film'
+                      ? (editingVideoId ? 'Edit 4K Wedding Film' : 'Add 4K Wedding Film')
+                      : (editingVideoId ? 'Edit Quick Reel' : 'Add Quick Reel')}
+                  </h3>
+                  {editingVideoId && (
+                    <span className="text-[10px] text-[#C5A059] font-cinzel uppercase tracking-wider block mt-0.5">
+                      ✦ Editing Existing Item
+                    </span>
+                  )}
+                </div>
                 <button
-                  onClick={() => setVideoModalOpen(false)}
+                  onClick={() => {
+                    setEditingVideoId(null);
+                    setVideoModalOpen(false);
+                  }}
                   className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer"
                 >
                   ✕
                 </button>
               </div>
+
+              {/* Hidden File Input for Thumbnail Upload */}
+              <input
+                type="file"
+                ref={videoThumbInputRef}
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleThumbnailSelected(e.target.files[0], videoFormType);
+                  }
+                }}
+              />
 
               {videoFormType === 'film' ? (
                 <form onSubmit={handleSaveFilm} className="space-y-4">
@@ -3126,14 +3348,85 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-cinzel uppercase text-white/70">Thumbnail Image URL</label>
+                  {/* ── Thumbnail Image Upload with Smart Compressor ── */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-cinzel uppercase text-white/70">Thumbnail Poster Image</label>
+                      <span className="text-[9px] text-[#C5A059]">Auto-compresses if &gt; 500KB</span>
+                    </div>
+
+                    {filmForm.thumbnail ? (
+                      <div className="rounded-2xl border border-white/15 bg-black/60 p-3 flex items-center gap-3">
+                        <img
+                          src={filmForm.thumbnail}
+                          alt="Thumbnail"
+                          className="w-20 h-14 object-cover rounded-xl border border-white/10 shrink-0"
+                          onError={(e) => { e.target.style.opacity = '0.3'; }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-xs font-medium truncate">{filmForm.thumbnail}</p>
+                          <span className="text-[10px] text-emerald-400">✓ Thumbnail Attached</span>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <button
+                              type="button"
+                              onClick={() => videoThumbInputRef.current?.click()}
+                              disabled={isUploadingVideoThumb}
+                              className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[10px] font-cinzel uppercase tracking-wider transition-colors cursor-pointer"
+                            >
+                              Upload New
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFilmForm({ ...filmForm, thumbnail: '' })}
+                              className="px-2 py-1 text-red-400 hover:text-red-300 text-[10px] transition-colors cursor-pointer"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        onClick={() => !isUploadingVideoThumb && videoThumbInputRef.current?.click()}
+                        className={`border-2 border-dashed rounded-2xl p-4 text-center cursor-pointer transition-all ${
+                          isUploadingVideoThumb
+                            ? 'border-[#C5A059] bg-[#C5A059]/10'
+                            : 'border-white/20 hover:border-[#C5A059] hover:bg-white/5'
+                        }`}
+                      >
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-[#C5A059]">
+                            <UploadCloud size={20} />
+                          </div>
+                          <div>
+                            <p className="text-white text-xs font-medium">Click to Upload Thumbnail Image</p>
+                            <p className="text-[10px] text-white/50 mt-0.5">JPG, PNG, WebP • Auto-compressed</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {isUploadingVideoThumb && (
+                      <div className="space-y-1 pt-1">
+                        <div className="flex items-center justify-between text-[10px] text-white/70">
+                          <span className="truncate">{videoThumbStatus || 'Processing...'}</span>
+                          <span className="font-mono text-[#C5A059]">{videoThumbProgress}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-[#C5A059] to-[#E64A6E] transition-all duration-300 rounded-full"
+                            style={{ width: `${videoThumbProgress}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     <input
                       type="text"
                       value={filmForm.thumbnail}
                       onChange={(e) => setFilmForm({ ...filmForm, thumbnail: e.target.value })}
-                      placeholder="/client1.jpg or Cloudinary Image URL"
-                      className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/15 text-white text-xs focus:outline-none focus:border-[#C5A059]"
+                      placeholder="Or paste direct image URL (optional)"
+                      className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white/70 text-[11px] focus:outline-none focus:border-[#C5A059]"
                     />
                   </div>
 
@@ -3152,7 +3445,7 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
                     type="submit"
                     className="w-full py-3.5 rounded-xl bg-[#C5A059] text-[#1C1917] font-cinzel text-xs tracking-wider uppercase font-bold shadow-lg hover:scale-[1.02] transition-all cursor-pointer"
                   >
-                    Save Wedding Film
+                    {editingVideoId ? 'Update Wedding Film' : 'Save Wedding Film'}
                   </button>
                 </form>
               ) : (
@@ -3215,14 +3508,85 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-cinzel uppercase text-white/70">Thumbnail Poster Image</label>
+                  {/* ── Reel Thumbnail Poster Image with Smart Compressor ── */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-cinzel uppercase text-white/70">Thumbnail Poster Image</label>
+                      <span className="text-[9px] text-[#E64A6E]">Auto-compresses if &gt; 500KB</span>
+                    </div>
+
+                    {reelForm.thumbnail ? (
+                      <div className="rounded-2xl border border-white/15 bg-black/60 p-3 flex items-center gap-3">
+                        <img
+                          src={reelForm.thumbnail}
+                          alt="Reel thumbnail"
+                          className="w-14 h-20 object-cover rounded-xl border border-white/10 shrink-0"
+                          onError={(e) => { e.target.style.opacity = '0.3'; }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-xs font-medium truncate">{reelForm.thumbnail}</p>
+                          <span className="text-[10px] text-emerald-400">✓ Thumbnail Attached</span>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <button
+                              type="button"
+                              onClick={() => videoThumbInputRef.current?.click()}
+                              disabled={isUploadingVideoThumb}
+                              className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-[10px] font-cinzel uppercase tracking-wider transition-colors cursor-pointer"
+                            >
+                              Upload New
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setReelForm({ ...reelForm, thumbnail: '' })}
+                              className="px-2 py-1 text-red-400 hover:text-red-300 text-[10px] transition-colors cursor-pointer"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        onClick={() => !isUploadingVideoThumb && videoThumbInputRef.current?.click()}
+                        className={`border-2 border-dashed rounded-2xl p-4 text-center cursor-pointer transition-all ${
+                          isUploadingVideoThumb
+                            ? 'border-[#E64A6E] bg-[#E64A6E]/10'
+                            : 'border-white/20 hover:border-[#E64A6E] hover:bg-white/5'
+                        }`}
+                      >
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-[#E64A6E]">
+                            <UploadCloud size={20} />
+                          </div>
+                          <div>
+                            <p className="text-white text-xs font-medium">Click to Upload Reel Poster Image</p>
+                            <p className="text-[10px] text-white/50 mt-0.5">JPG, PNG, WebP • Auto-compressed</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {isUploadingVideoThumb && (
+                      <div className="space-y-1 pt-1">
+                        <div className="flex items-center justify-between text-[10px] text-white/70">
+                          <span className="truncate">{videoThumbStatus || 'Processing...'}</span>
+                          <span className="font-mono text-[#E64A6E]">{videoThumbProgress}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-[#E64A6E] to-[#D8335B] transition-all duration-300 rounded-full"
+                            style={{ width: `${videoThumbProgress}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     <input
                       type="text"
                       value={reelForm.thumbnail}
                       onChange={(e) => setReelForm({ ...reelForm, thumbnail: e.target.value })}
-                      placeholder="/client8.jpg or Cloudinary Image URL"
-                      className="w-full px-4 py-3 rounded-xl bg-black/50 border border-white/15 text-white text-xs focus:outline-none focus:border-[#E64A6E]"
+                      placeholder="Or paste direct image URL (optional)"
+                      className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white/70 text-[11px] focus:outline-none focus:border-[#E64A6E]"
                     />
                   </div>
 
@@ -3230,7 +3594,7 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
                     type="submit"
                     className="w-full py-3.5 rounded-xl bg-[#E64A6E] text-white font-cinzel text-xs tracking-wider uppercase font-bold shadow-lg hover:scale-[1.02] transition-all cursor-pointer"
                   >
-                    Save Quick Reel
+                    {editingVideoId ? 'Update Quick Reel' : 'Save Quick Reel'}
                   </button>
                 </form>
               )}

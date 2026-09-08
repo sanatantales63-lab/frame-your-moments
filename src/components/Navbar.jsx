@@ -161,6 +161,34 @@ export default function Navbar({ onNavigateToVideos, onNavigateToAdmin, onNaviga
                       </span>
                     </motion.a>
                   ))}
+
+                  {/* Mobile Quick Socials */}
+                  <div className="lg:hidden pt-6 pb-2 flex flex-wrap items-center gap-3 text-[10px] font-cinzel tracking-[0.2em] uppercase text-[#8A7968]">
+                    <a
+                      href="https://www.instagram.com/frameyourmomentsofficial?stkn=eDNocDh2Z2t0d2s%3D&utm_source=qr"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-[#E64A6E] transition-colors"
+                    >
+                      Instagram ↗
+                    </a>
+                    <span>•</span>
+                    <a
+                      href="https://www.facebook.com/share/1BjgBWk76r/?mibextid=wwXIfr"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-[#1877F2] transition-colors"
+                    >
+                      Facebook ↗
+                    </a>
+                    <span>•</span>
+                    <a
+                      href="mailto:frameyourmoments2018@gmail.com"
+                      className="hover:text-[#C5A059] transition-colors"
+                    >
+                      Email
+                    </a>
+                  </div>
                 </div>
               </div>
 
@@ -183,12 +211,13 @@ export default function Navbar({ onNavigateToVideos, onNavigateToAdmin, onNaviga
                   </div>
                   <div>
                     <p className="font-cinzel text-[9px] tracking-[0.3em] uppercase text-[#B0A898] mb-2">Contact</p>
-                    <p className="font-sans text-sm text-[#44403C]">hello@frameyourmoments.in</p>
-                    <p className="font-sans text-sm text-[#44403C]">+91 98765 43210</p>
+                    <p className="font-sans text-sm text-[#44403C] break-all">frameyourmoments2018@gmail.com</p>
+                    <p className="font-sans text-sm text-[#44403C]">+91 80133 46138</p>
                   </div>
                 </div>
-                <div className="flex gap-5 text-[10px] font-cinzel tracking-[0.2em] uppercase text-[#8A7968]">
-                  <a href="#" className="hover:text-[#C5A059] transition-colors">Instagram</a>
+                <div className="flex flex-wrap gap-4 text-[10px] font-cinzel tracking-[0.2em] uppercase text-[#8A7968]">
+                  <a href="https://www.instagram.com/frameyourmomentsofficial?stkn=eDNocDh2Z2t0d2s%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="hover:text-[#C5A059] transition-colors">Instagram</a>
+                  <a href="https://www.facebook.com/share/1BjgBWk76r/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="hover:text-[#C5A059] transition-colors">Facebook</a>
                   <a href="#" className="hover:text-[#C5A059] transition-colors">YouTube</a>
                   <a href="#" className="hover:text-[#C5A059] transition-colors">Pinterest</a>
                 </div>

@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
-import { Star, ChevronLeft, ChevronRight, Quote, X, Heart, MessageCircleHeart } from 'lucide-react';
+import { Star, ChevronLeft, ChevronRight, X, Heart } from 'lucide-react';
 import { getTestimonials, DEFAULT_TESTIMONIALS } from '../data/testimonialsData';
 /* ── Custom CSS for Watermark & Stroke Typography ── */
 const testimonialsCSS = `
@@ -36,6 +37,18 @@ export default function Testimonials() {
       }
     });
   }, []);
+
+  /* Lock background scroll when story modal is active */
+  useEffect(() => {
+    if (activeStory) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [activeStory]);
 
   /* Mobile/Desktop scroll controls */
   const scrollToCard = (index) => {
@@ -280,74 +293,107 @@ export default function Testimonials() {
 
       </div>
 
-      {/* ══════════ STORY MODAL POPUP ══════════ */}
-      <AnimatePresence>
-        {activeStory && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6"
-            onClick={() => setActiveStory(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-[#FAF7F2] text-[#1C1917] max-w-2xl w-full rounded-3xl overflow-hidden shadow-2xl relative p-6 sm:p-8 border border-[#E8DFD1]"
-            >
-              {/* Close Button */}
-              <button
+      {/* ══════════ STORY MODAL POPUP (Portal to document.body) ══════════ */}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {activeStory && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[99999] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-3 sm:p-6 overflow-y-auto"
                 onClick={() => setActiveStory(null)}
-                className="absolute top-4 right-4 w-9 h-9 rounded-full bg-[#1C1917] text-white flex items-center justify-center hover:bg-[#E64A6E] transition-colors cursor-pointer z-20"
               >
-                <X size={16} />
-              </button>
-
-              <div className="flex flex-col sm:flex-row gap-6 items-start">
-                <div className="w-full sm:w-48 aspect-[3/4] rounded-2xl overflow-hidden flex-shrink-0 border border-[#E8DFD1]">
-                  {activeStory.image ? (
-                    <img src={activeStory.image} alt={activeStory.name} className="w-full h-full object-cover"
-                      onError={(e) => { e.target.style.display = 'none'; }} />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#C5A059]/20 to-[#E64A6E]/10 flex items-center justify-center">
-                      <span className="font-serif-luxury text-5xl text-[#C5A059]/60">{activeStory.name.charAt(0)}</span>
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0, y: 16 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.95, opacity: 0, y: 16 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-[#FAF7F2] text-[#1C1917] max-w-2xl w-full max-h-[85vh] sm:max-h-[88vh] rounded-3xl shadow-2xl border border-[#E8DFD1] flex flex-col overflow-hidden my-auto"
+                >
+                  {/* Dedicated Elegant Header Bar */}
+                  <div className="flex items-center justify-between px-5 sm:px-8 py-3.5 sm:py-4 border-b border-[#E8DFD1] bg-[#FAF7F2] shrink-0">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[#C5A059]" />
+                      <span className="font-cinzel text-[10px] sm:text-xs tracking-[0.2em] uppercase text-[#1C1917] font-bold">
+                        Real Wedding Story
+                      </span>
                     </div>
-                  )}
-                </div>
-
-                <div className="flex-1 space-y-3">
-                  <div className="flex items-center gap-1 text-[#C5A059]">
-                    {[...Array(activeStory.rating)].map((_, i) => (
-                      <Star key={i} size={14} className="fill-current" />
-                    ))}
+                    <button
+                      onClick={() => setActiveStory(null)}
+                      className="w-8 h-8 rounded-full bg-[#1C1917] hover:bg-[#E64A6E] text-white flex items-center justify-center transition-colors cursor-pointer shadow-sm"
+                      aria-label="Close story modal"
+                    >
+                      <X size={15} />
+                    </button>
                   </div>
 
-                  <h3 className="font-serif-luxury text-3xl text-[#1C1917]">
-                    {activeStory.name}
-                  </h3>
-                  <p className="font-cinzel text-xs text-[#C5A059] tracking-wider uppercase font-semibold">
-                    {activeStory.location} • {activeStory.event}
-                  </p>
+                  {/* Scrollable Story Content Area */}
+                  <div className="overflow-y-auto p-5 sm:p-8 overscroll-contain flex-1">
+                    <div className="flex flex-col sm:flex-row gap-5 sm:gap-7 items-start">
+                      
+                      {/* Photo: responsive banner on mobile, fine portrait on desktop */}
+                      <div className="w-full sm:w-48 h-48 sm:h-auto sm:aspect-[3/4] rounded-2xl overflow-hidden flex-shrink-0 border border-[#E8DFD1] shadow-xs relative bg-[#FAF7F2]">
+                        {activeStory.image ? (
+                          <img
+                            src={activeStory.image}
+                            alt={activeStory.name}
+                            className="w-full h-full object-cover object-center"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                        ) : (
+                          <div className="w-full h-full min-h-[160px] sm:min-h-0 bg-gradient-to-br from-[#C5A059]/20 to-[#E64A6E]/10 flex items-center justify-center">
+                            <span className="font-serif-luxury text-5xl text-[#C5A059]/60">{activeStory.name.charAt(0)}</span>
+                          </div>
+                        )}
+                      </div>
 
-                  <div className="h-[1px] bg-[#E8DFD1] my-2" />
+                      {/* Text Details */}
+                      <div className="flex-1 space-y-3 min-w-0">
+                        <div className="flex items-center gap-1.5 text-[#C5A059]">
+                          <div className="flex items-center gap-0.5">
+                            {[...Array(activeStory.rating)].map((_, i) => (
+                              <Star key={i} size={15} className="fill-[#C5A059] text-[#C5A059]" />
+                            ))}
+                          </div>
+                          <span className="font-sans text-xs font-bold text-[#1C1917] ml-1 bg-[#FAF7F2] border border-[#E8DFD1] px-2 py-0.5 rounded-full">
+                            {activeStory.rating}.0
+                          </span>
+                        </div>
 
-                  <p className="font-sans text-sm text-[#57534E] leading-relaxed italic">
-                    "{activeStory.quote}"
-                  </p>
+                        <h3 className="font-serif-luxury text-2xl sm:text-3xl text-[#1C1917] font-semibold leading-tight">
+                          {activeStory.name}
+                        </h3>
+                        
+                        <p className="font-cinzel text-[11px] text-[#C5A059] tracking-wider uppercase font-semibold">
+                          {activeStory.location} • {activeStory.event}
+                        </p>
 
-                  {activeStory.fullStory && (
-                    <p className="font-sans text-xs text-[#1C1917]/80 leading-relaxed pt-2">
-                      {activeStory.fullStory}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
+                        <div className="h-[1px] bg-[#E8DFD1] my-2" />
+
+                        <p className="font-sans text-xs sm:text-sm text-[#57534E] leading-relaxed italic">
+                          "{activeStory.quote}"
+                        </p>
+
+                        {activeStory.fullStory && (
+                          <div className="pt-2 border-t border-[#E8DFD1]/60 mt-3">
+                            <p className="font-sans text-xs sm:text-sm text-[#1C1917]/85 leading-relaxed">
+                              {activeStory.fullStory}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
+                  </div>
+
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
         )}
-      </AnimatePresence>
     </section>
   );
 }

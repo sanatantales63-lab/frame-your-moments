@@ -114,13 +114,23 @@ export default function Footer({ onNavigateToVideos, onNavigateToAdmin, onNaviga
               </a>
 
               <a
-                href="https://instagram.com/frameyourmoments"
+                href="https://www.instagram.com/frameyourmomentsofficial?stkn=eDNocDh2Z2t0d2s%3D&utm_source=qr"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 hover:border-[#E64A6E] text-white font-cinzel text-[10px] tracking-[0.2em] uppercase font-bold transition-all shadow-xs"
               >
                 <svg className="w-3.5 h-3.5 text-[#E64A6E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
                 <span>Instagram</span>
+              </a>
+
+              <a
+                href="https://www.facebook.com/share/1BjgBWk76r/?mibextid=wwXIfr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/10 hover:bg-[#1877F2]/25 border border-white/20 hover:border-[#1877F2] text-white font-cinzel text-[10px] tracking-[0.2em] uppercase font-bold transition-all shadow-xs"
+              >
+                <svg className="w-3.5 h-3.5 text-[#1877F2]" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                <span>Facebook</span>
               </a>
             </div>
           </div>
@@ -196,7 +206,7 @@ export default function Footer({ onNavigateToVideos, onNavigateToAdmin, onNaviga
               <li>
                 <a href="#contact" className="hover:text-[#F5D77F] transition-colors flex items-center gap-2 group text-[#F5D77F] font-medium">
                   <ChevronRight size={13} className="text-[#F5D77F] opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-                  <span>Check Muhurat Availability</span>
+                  <span>Check Date Availability</span>
                 </a>
               </li>
             </ul>
@@ -271,24 +281,33 @@ export default function Footer({ onNavigateToVideos, onNavigateToAdmin, onNaviga
               </a>
 
               <a
-                href="mailto:hello@frameyourmoments.in"
+                href="mailto:frameyourmoments2018@gmail.com"
                 className="flex items-center gap-3 hover:text-[#F5D77F] transition-colors group"
               >
                 <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-[#E64A6E] group-hover:border-[#E64A6E]/70 shrink-0">
                   <Mail size={14} />
                 </div>
-                <span className="truncate text-white group-hover:text-[#F5D77F] font-medium">hello@frameyourmoments.in</span>
+                <span className="truncate text-white group-hover:text-[#F5D77F] font-medium">frameyourmoments2018@gmail.com</span>
               </a>
 
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-[#F5D77F] shrink-0 mt-0.5">
+              <a
+                href="https://www.google.com/maps/search/52+Mukundapur,+Kolkata-700099,+West+Bengal?entry=gmail&source=g"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-start gap-3 hover:text-[#F5D77F] transition-colors group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-[#F5D77F] group-hover:border-[#F5D77F]/70 shrink-0 mt-0.5">
                   <MapPin size={14} />
                 </div>
                 <div className="text-xs leading-relaxed text-white/90">
-                  <strong className="text-white block font-semibold text-[13px]">Kolkata Flagship Studio</strong>
-                  West Bengal, India · Destination Travel Worldwide
+                  <div className="flex items-center gap-1.5">
+                    <strong className="text-white block font-semibold text-[13px] group-hover:text-[#F5D77F] transition-colors">Kolkata Flagship Location</strong>
+                    <span className="text-[10px] text-[#F5D77F]/80">↗</span>
+                  </div>
+                  6B/52 Mukundapur, Kolkata-700099, West Bengal<br />
+                  <span className="text-white/60 text-[11px]">Destination Travel Worldwide</span>
                 </div>
-              </div>
+              </a>
 
               <div className="flex items-start gap-3 pt-1">
                 <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-white/80 shrink-0 mt-0.5">
@@ -303,7 +322,7 @@ export default function Footer({ onNavigateToVideos, onNavigateToAdmin, onNaviga
 
         </motion.div>
 
-        {/* ═══ VIP LOOKBOOK / MUHURAT GUIDE STRIP ═══ */}
+        {/* ═══ VIP LOOKBOOK / WEDDING GUIDE STRIP ═══ */}
         <motion.div
           initial={{ opacity: 0, y: 35, filter: 'blur(6px)' }}
           whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
@@ -319,7 +338,7 @@ export default function Footer({ onNavigateToVideos, onNavigateToAdmin, onNaviga
               Planning your 2026–2027 Wedding?
             </h4>
             <p className="font-sans text-xs text-white/90">
-              Request our bespoke wedding lookbook & muhurat calendar checklist directly on WhatsApp.
+              Request our bespoke wedding lookbook & date availability checklist directly on WhatsApp.
             </p>
           </div>
 

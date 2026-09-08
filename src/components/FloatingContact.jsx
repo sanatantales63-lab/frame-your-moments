@@ -28,6 +28,16 @@ const WhatsAppIcon = ({ size = 26 }) => (
   </svg>
 );
 
+const FacebookIcon = ({ size = 26 }) => (
+  <svg viewBox="0 0 48 48" width={size} height={size} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="2" y="2" width="44" height="44" rx="12" fill="#1877F2"/>
+    <path
+      d="M29.5 25.2l.9-5.9h-5.6v-3.8c0-1.6.8-3.2 3.3-3.2h2.6V7.2s-2.4-.4-4.6-.4c-4.7 0-7.8 2.9-7.8 8v4.5h-5.2v5.9h5.2v14.2c1.1.2 2.1.2 3.2.2s2.2-.1 3.2-.2V25.2h4.4z"
+      fill="white"
+    />
+  </svg>
+);
+
 const PhoneIcon = ({ size = 26 }) => (
   <svg viewBox="0 0 48 48" width={size} height={size} fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect x="2" y="2" width="44" height="44" rx="12" fill="#E64A6E"/>
@@ -48,6 +58,7 @@ const CloseIcon = () => (
 /* ─── Rotating trigger icons list ─── */
 const triggerIcons = [
   <InstagramIcon key="ig" size={26} />,
+  <FacebookIcon  key="fb" size={26} />,
   <WhatsAppIcon  key="wa" size={26} />,
   <PhoneIcon     key="ph" size={26} />,
 ];
@@ -55,19 +66,25 @@ const triggerIcons = [
 const options = [
   {
     label: 'Instagram',
-    href: 'https://www.instagram.com/frameyourmoments_official/',
+    href: 'https://www.instagram.com/frameyourmomentsofficial?stkn=eDNocDh2Z2t0d2s%3D&utm_source=qr',
     icon: <InstagramIcon size={22} />,
     color: '#d6249f',
   },
   {
+    label: 'Facebook',
+    href: 'https://www.facebook.com/share/1BjgBWk76r/?mibextid=wwXIfr',
+    icon: <FacebookIcon size={22} />,
+    color: '#1877F2',
+  },
+  {
     label: 'WhatsApp',
-    href: 'https://wa.me/919876543210',
+    href: 'https://wa.me/918013346138',
     icon: <WhatsAppIcon size={22} />,
     color: '#25D366',
   },
   {
     label: 'Call Us',
-    href: 'tel:+919876543210',
+    href: 'tel:+918013346138',
     icon: <PhoneIcon size={22} />,
     color: '#E64A6E',
   },
