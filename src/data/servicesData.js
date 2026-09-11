@@ -217,7 +217,7 @@ export function saveServiceBanner(slug, bannerUrl) {
 }
 
 /**
- * Fetch all service banners from Supabase (fym_media table where section = 'service_banner')
+ * Fetch all service banners from Supabase (fym_service_banners table).
  */
 export async function fetchAllServiceBannersFromSupabase() {
   const bannersMap = {};
@@ -242,31 +242,29 @@ export async function fetchAllServiceBannersFromSupabase() {
       return bannersMap;
     }
   } catch (e) {
-    // fallback
+    // fallback to fym_media
   }
 
-  // 2. Fallback to fym_media table
+  // 2. Fallback to fym_media table — fetch all, filter by section client-side
   try {
-    const { data, error } = await supabase
-      .from('fym_media')
-      .select('*')
-      .eq('section', 'service_banner');
-
+    const { data, error } = await supabase.from('fym_media').select('*');
     if (!error && Array.isArray(data)) {
-      data.forEach((row) => {
-        const slug = row.category || row.meta?.slug;
-        if (slug && row.url) {
-          bannersMap[slug] = {
-            id: row.id,
-            url: row.url,
-            caption: row.caption || '',
-            isCompressed: row.is_compressed || false,
-            originalSize: row.original_size || 0,
-            compressedSize: row.compressed_size || 0
-          };
-          saveServiceBanner(slug, row.url);
-        }
-      });
+      data
+        .filter((row) => row.section === 'service_banner')
+        .forEach((row) => {
+          const slug = row.category || row.meta?.slug;
+          if (slug && row.url) {
+            bannersMap[slug] = {
+              id: row.id,
+              url: row.url,
+              caption: row.caption || '',
+              isCompressed: row.is_compressed || false,
+              originalSize: row.original_size || 0,
+              compressedSize: row.compressed_size || 0
+            };
+            saveServiceBanner(slug, row.url);
+          }
+        });
     }
   } catch (e) {
     console.warn('Supabase fetch for service banners failed', e);
@@ -279,38 +277,34 @@ export async function fetchAllServiceBannersFromSupabase() {
  * Fetch a specific service banner from Supabase.
  */
 export async function fetchServiceBannerFromSupabase(slug) {
-  // 1. Try dedicated fym_service_banners table
+  // 1. Try dedicated fym_service_banners table — fetch all, filter client-side
   try {
-    const { data, error } = await supabase
-      .from('fym_service_banners')
-      .select('*')
-      .eq('service_slug', slug)
-      .maybeSingle();
-
-    if (!error && data && data.url) {
-      saveServiceBanner(slug, data.url);
-      return {
-        id: data.id,
-        url: data.url,
-        caption: data.caption || '',
-        isCompressed: data.is_compressed || false,
-        originalSize: data.original_size || 0,
-        compressedSize: data.compressed_size || 0
-      };
+    const { data, error } = await supabase.from('fym_service_banners').select('*');
+    if (!error && Array.isArray(data)) {
+      const row = data.find((r) => r.service_slug === slug);
+      if (row && row.url) {
+        saveServiceBanner(slug, row.url);
+        return {
+          id: row.id,
+          url: row.url,
+          caption: row.caption || '',
+          isCompressed: row.is_compressed || false,
+          originalSize: row.original_size || 0,
+          compressedSize: row.compressed_size || 0
+        };
+      }
     }
   } catch (e) {
     // fallback
   }
 
-  // 2. Fallback to fym_media table
+  // 2. Fallback to fym_media table — fetch all, filter client-side
   try {
-    const { data, error } = await supabase
-      .from('fym_media')
-      .select('*')
-      .eq('section', 'service_banner');
-
+    const { data, error } = await supabase.from('fym_media').select('*');
     if (!error && Array.isArray(data)) {
-      const row = data.find((r) => r.category === slug || r.meta?.slug === slug);
+      const row = data.find(
+        (r) => r.section === 'service_banner' && (r.category === slug || r.meta?.slug === slug)
+      );
       if (row && row.url) {
         saveServiceBanner(slug, row.url);
         return {
@@ -334,54 +328,61 @@ export async function fetchServiceBannerFromSupabase(slug) {
 
 /**
  * Save / replace service banner in Supabase.
+ * Uses check-then-insert/update (no upsert) for reliability.
  */
 export async function saveServiceBannerToSupabase(slug, bannerData) {
   const bannerUrl = bannerData.src || bannerData.url;
+
+  // Always save to localStorage immediately
   saveServiceBanner(slug, bannerUrl);
 
-  try {
-    // 1. Try upsert to dedicated fym_service_banners table
-    const { data, error } = await supabase
-      .from('fym_service_banners')
-      .upsert(
-        {
-          service_slug: slug,
-          url: bannerUrl,
-          caption: bannerData.caption || `${slug} Hero Banner`,
-          is_compressed: bannerData.isCompressed || false,
-          original_size: bannerData.originalSize || 0,
-          compressed_size: bannerData.compressedSize || 0,
-          updated_at: new Date().toISOString()
-        },
-        { onConflict: 'service_slug' }
-      );
+  const payload = {
+    service_slug: slug,
+    url: bannerUrl,
+    caption: bannerData.caption || `${slug} Hero Banner`,
+    is_compressed: bannerData.isCompressed || false,
+    original_size: bannerData.originalSize || 0,
+    compressed_size: bannerData.compressedSize || 0,
+    updated_at: new Date().toISOString()
+  };
 
-    if (!error) {
-      return { success: true, data };
+  try {
+    // Step 1: Check if a record already exists for this slug
+    const { data: existing, error: fetchErr } = await supabase
+      .from('fym_service_banners')
+      .select('*');
+
+    if (fetchErr) {
+      console.warn('Could not check existing banners:', fetchErr);
     }
 
-    console.warn('Upsert to fym_service_banners failed, falling back to fym_media:', error);
+    const existingRow = Array.isArray(existing)
+      ? existing.find((r) => r.service_slug === slug)
+      : null;
 
-    // 2. Fallback to fym_media table
-    await supabase
-      .from('fym_media')
-      .delete()
-      .eq('section', 'service_banner')
-      .eq('category', slug);
+    if (existingRow) {
+      // Step 2a: Record exists → UPDATE it
+      const { data, error } = await supabase
+        .from('fym_service_banners')
+        .update(payload, 'service_slug', slug);
 
-    const row = {
-      section: 'service_banner',
-      category: slug,
-      url: bannerUrl,
-      caption: bannerData.caption || `${slug} Hero Banner`,
-      meta: { slug, title: SERVICES_META.find((s) => s.slug === slug)?.title || slug },
-      is_compressed: bannerData.isCompressed || false,
-      original_size: bannerData.originalSize || 0,
-      compressed_size: bannerData.compressedSize || 0
-    };
+      if (error) {
+        console.error('Failed to UPDATE service banner in Supabase:', error);
+        return { success: false, error };
+      }
+      return { success: true, data };
+    } else {
+      // Step 2b: No record → INSERT fresh
+      const { data, error } = await supabase
+        .from('fym_service_banners')
+        .insert([payload]);
 
-    const mediaRes = await supabase.from('fym_media').insert([row]);
-    return { success: !mediaRes.error, data: mediaRes.data };
+      if (error) {
+        console.error('Failed to INSERT service banner in Supabase:', error);
+        return { success: false, error };
+      }
+      return { success: true, data };
+    }
   } catch (e) {
     console.error('Error in saveServiceBannerToSupabase:', e);
     return { success: false, error: e };
@@ -394,12 +395,13 @@ export async function saveServiceBannerToSupabase(slug, bannerData) {
 export async function deleteServiceBannerFromSupabase(slug) {
   try {
     saveServiceBanner(slug, '');
-    await supabase.from('fym_service_banners').delete().eq('service_slug', slug);
-    await supabase.from('fym_media').delete().eq('section', 'service_banner').eq('category', slug);
+    await supabase.from('fym_service_banners').delete('service_slug', slug);
+    await supabase.from('fym_media').delete('category', slug);
     return { success: true };
   } catch (e) {
     console.warn('Error deleting service banner from Supabase', e);
     return { success: false, error: e };
   }
 }
+
 

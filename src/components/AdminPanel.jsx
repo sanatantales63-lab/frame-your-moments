@@ -50,7 +50,7 @@ import {
   extractInstagramCode,
   getInstagramEmbedUrl
 } from '../utils/mediaUploader';
-import { supabase, CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../utils/supabaseClient';
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY, CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../utils/supabaseClient';
 import {
   SERVICES_META,
   getServiceGallery,
@@ -266,12 +266,15 @@ CREATE POLICY "Allow public write fym_testimonials" ON public.fym_testimonials F
 `;
 
 export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigateToService, onNavigateToBlogs }) {
-  // ── PIN Authentication State ──
+  // ── Supabase Auth State ──
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return sessionStorage.getItem('fym_admin_auth') === 'true';
   });
-  const [pinInput, setPinInput] = useState('');
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
 
   // ── Active Tab ──
   const [activeTab, setActiveTab] = useState('services'); // 'services' | 'hero' | 'grid' | 'videos' | 'sql'
@@ -678,23 +681,54 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
     setTestimonials(fresh);
   };
 
-  // ── Handle PIN Login ──
-  const handleLogin = (e) => {
+  // ── Handle Supabase Email+Password Login ──
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Default Owner PIN is 1234 or frame2026
-    if (pinInput === '1234' || pinInput === 'frame2026' || pinInput === 'admin') {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('fym_admin_auth', 'true');
-      setAuthError('');
-    } else {
-      setAuthError('Incorrect Owner PIN. Please try again.');
+    if (!emailInput.trim() || !passwordInput.trim()) {
+      setAuthError('Please enter both email and password.');
+      return;
+    }
+
+    setIsLoggingIn(true);
+    setAuthError('');
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({
+          email: emailInput.trim(),
+          password: passwordInput.trim()
+        })
+      });
+
+      const json = await res.json();
+
+      if (res.ok && json.access_token) {
+        setIsAuthenticated(true);
+        sessionStorage.setItem('fym_admin_auth', 'true');
+        sessionStorage.setItem('fym_admin_token', json.access_token);
+        setAuthError('');
+      } else {
+        const msg = json?.error_description || json?.msg || 'Invalid email or password.';
+        setAuthError(msg);
+      }
+    } catch (err) {
+      setAuthError('Network error. Please check your connection.');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     sessionStorage.removeItem('fym_admin_auth');
-    setPinInput('');
+    sessionStorage.removeItem('fym_admin_token');
+    setEmailInput('');
+    setPasswordInput('');
   };
 
   // ── Multi-File Upload & Auto-Compress Handler ──
@@ -1298,7 +1332,7 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
   };
 
   // ═════════════════════════════════════════════════════════════════════════════
-  // ── PIN AUTHENTICATION VIEW ──
+  // ── SUPABASE AUTH LOGIN VIEW ──
   // ═════════════════════════════════════════════════════════════════════════════
   if (!isAuthenticated) {
     return (
@@ -1328,37 +1362,66 @@ export default function AdminPanel({ onBackToHome, onNavigateToVideos, onNavigat
             Frame Your Moments • Control Panel
           </p>
 
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-4">
+            {/* Email Field */}
             <div className="space-y-2 text-left">
               <label className="font-cinzel text-[10px] tracking-wider uppercase text-white/70">
-                Enter Studio PIN
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                placeholder="owner@example.com"
+                autoFocus
+                autoComplete="email"
+                disabled={isLoggingIn}
+                className="w-full px-5 py-4 rounded-xl bg-black/50 border border-white/15 text-white font-sans text-sm placeholder:text-white/25 focus:outline-none focus:border-[#C5A059] focus:ring-2 focus:ring-[#C5A059]/20 transition-all disabled:opacity-50"
+              />
+            </div>
+
+            {/* Password Field */}
+            <div className="space-y-2 text-left">
+              <label className="font-cinzel text-[10px] tracking-wider uppercase text-white/70">
+                Password
               </label>
               <input
                 type="password"
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value)}
-                placeholder="Enter PIN (e.g. 1234)"
-                autoFocus
-                className="w-full px-5 py-4 rounded-xl bg-black/50 border border-white/15 text-white font-mono text-center tracking-[0.4em] text-xl placeholder:text-white/20 focus:outline-none focus:border-[#C5A059] focus:ring-2 focus:ring-[#C5A059]/20 transition-all"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                disabled={isLoggingIn}
+                className="w-full px-5 py-4 rounded-xl bg-black/50 border border-white/15 text-white font-mono text-center tracking-[0.3em] text-xl placeholder:text-white/20 focus:outline-none focus:border-[#C5A059] focus:ring-2 focus:ring-[#C5A059]/20 transition-all disabled:opacity-50"
               />
-              {authError && (
-                <p className="text-red-400 text-xs flex items-center gap-1.5 pt-1">
-                  <AlertCircle size={13} />
-                  <span>{authError}</span>
-                </p>
-              )}
             </div>
 
+            {/* Error Message */}
+            {authError && (
+              <p className="text-red-400 text-xs flex items-center gap-1.5 pt-1">
+                <AlertCircle size={13} />
+                <span>{authError}</span>
+              </p>
+            )}
+
+            {/* Submit Button */}
             <button
               type="submit"
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-[#C5A059] via-[#E2C275] to-[#B38728] text-[#1C1917] font-cinzel text-xs tracking-[0.2em] uppercase font-bold shadow-lg hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer"
+              disabled={isLoggingIn}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-[#C5A059] via-[#E2C275] to-[#B38728] text-[#1C1917] font-cinzel text-xs tracking-[0.2em] uppercase font-bold shadow-lg hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Unlock Dashboard
+              {isLoggingIn ? (
+                <>
+                  <RefreshCw size={14} className="animate-spin" />
+                  <span>Verifying...</span>
+                </>
+              ) : (
+                <span>Unlock Dashboard</span>
+              )}
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between text-xs text-white/40">
-            <span>Default PIN: <strong className="text-white/70">1234</strong></span>
+          <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-end text-xs text-white/40">
             <button
               onClick={onBackToHome}
               className="hover:text-white transition-colors cursor-pointer"

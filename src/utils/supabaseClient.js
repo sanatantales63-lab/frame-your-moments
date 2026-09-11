@@ -105,6 +105,35 @@ class SupabaseRestClient {
           console.error(`Supabase DELETE network error on ${tableName}:`, error);
           return { data: null, error };
         }
+      },
+
+      upsert: async (row, { onConflict } = {}) => {
+        try {
+          const payload = Array.isArray(row) ? row : [row];
+          const upsertHeaders = {
+            ...headers,
+            'Prefer': `return=representation,resolution=merge-duplicates`
+          };
+          let url = tableUrl;
+          if (onConflict) {
+            url += `?on_conflict=${encodeURIComponent(onConflict)}`;
+          }
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: upsertHeaders,
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({ status: res.status, text: res.statusText }));
+            console.error(`Supabase UPSERT error on ${tableName}:`, err);
+            return { data: null, error: err };
+          }
+          const data = await res.json();
+          return { data, error: null };
+        } catch (error) {
+          console.error(`Supabase UPSERT network error on ${tableName}:`, error);
+          return { data: null, error };
+        }
       }
     };
   }
