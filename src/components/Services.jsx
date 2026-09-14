@@ -8,7 +8,7 @@ const services = [
     id: 1,
     slug: 'wedding',
     title: 'Premium Wedding',
-    desc: 'Premium wedding coverage.',
+    desc: 'Royal Bengali wedding photography in Kolkata & West Bengal.',
     image: '',
     isHot: true,
   },
@@ -16,21 +16,21 @@ const services = [
     id: 2,
     slug: 'engagement',
     title: 'Engagement Sessions',
-    desc: 'Intimate engagement shoots.',
+    desc: 'Intimate engagement shoots across Kolkata & Bengal.',
     image: '',
   },
   {
     id: 3,
     slug: 'pre-wedding',
     title: 'Pre-wedding Photography',
-    desc: 'Romantic pre-wedding sessions.',
+    desc: 'Romantic pre-wedding sessions in Kolkata & destinations.',
     image: '',
   },
   {
     id: 4,
     slug: 'event',
     title: 'Event Photography',
-    desc: 'Elegant event/personal shoot.',
+    desc: 'Elegant event & portrait photography in West Bengal.',
     image: '',
   },
 ];
@@ -187,7 +187,7 @@ export default function Services({ onNavigateToService }) {
             transition={{ duration: 0.8, delay: 0.15 }}
             className="font-serif-luxury text-5xl sm:text-6xl md:text-7xl italic text-white font-light mb-4"
           >
-            Our Services
+            Wedding Photography Services in Kolkata
           </motion.h2>
 
           {/* Colored Dots */}
@@ -209,8 +209,7 @@ export default function Services({ onNavigateToService }) {
             transition={{ duration: 0.7, delay: 0.35 }}
             className="font-sans text-[#A8A29E] max-w-xl leading-relaxed text-sm sm:text-base"
           >
-            From intimate pre-wedding shoots to grand wedding celebrations, we offer
-            comprehensive photography services tailored to your needs
+            From intimate pre-wedding shoots in Kolkata to grand Bengali wedding celebrations across West Bengal, we offer comprehensive photography and cinematography services tailored to your needs.
           </motion.p>
         </div>
 

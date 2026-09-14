@@ -46,7 +46,7 @@ function ScrollColumn({ images, direction = 'up', duration = HERO_SCROLL_DURATIO
           <div key={i} className={`w-full ${img.h || heightPatterns[i % heightPatterns.length]} rounded-md sm:rounded-lg overflow-hidden flex-shrink-0`}>
             <img
               src={img.src || img.url || ''}
-              alt=""
+              alt={img.alt || `FYM Photography – Luxury Wedding Photography in Kolkata, West Bengal – Fine Art Frame ${Math.floor(i / 2) + 1}`}
               loading="lazy"
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
               draggable={false}
@@ -87,7 +87,19 @@ export default function Hero() {
   const col3 = col3Photos.length > 0 ? col3Photos : heroPhotos.filter((_, i) => i % 3 === 2).map((p, i) => ({ ...p, h: heightPatterns[(i + 2) % heightPatterns.length] }));
 
   return (
-    <section id="hero" className="relative w-full bg-[#FAF7F2] pt-[72px] overflow-hidden">
+    <section
+      id="hero"
+      aria-label="Frame Your Moments – Best Wedding Photographer in Kolkata, West Bengal"
+      className="relative w-full bg-[#FAF7F2] pt-[72px] overflow-hidden"
+    >
+      {/* Hidden SEO text — visible to crawlers, invisible to users */}
+      <p className="sr-only">
+        Frame Your Moments (FYM Photography) is the best wedding photographer in Kolkata, West Bengal.
+        Specializing in fine-art wedding photography, cinematic wedding films, pre-wedding shoots,
+        and royal Bengali weddings. Serving Kolkata, Howrah, Asansol, Siliguri, Durgapur and all of West Bengal.
+        Award-winning wedding videographer in Kolkata with over 500 luxury weddings captured.
+        Book your 2026-2027 wedding photography dates now.
+      </p>
       {/* ── Piixonova-style one-time diagonal shine reflection on load ── */}
       <motion.div
         initial={{ left: '-120%' }}
@@ -130,7 +142,7 @@ export default function Hero() {
               transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
               className="font-serif-luxury text-[2.4rem] sm:text-5xl xl:text-[3.5rem] font-normal text-[#1C1917] leading-[1.1]"
             >
-              Luxury Wedding Stories.{' '}
+              Kolkata's Finest Wedding Stories.{' '}
               <em className="not-italic font-serif-luxury italic text-[#8A7968]">Beautifully</em>{' '}
               Captured.
             </motion.h1>
@@ -142,7 +154,7 @@ export default function Hero() {
               transition={{ duration: 0.7, delay: 0.35 }}
               className="font-sans text-[14px] sm:text-[15px] text-[#57534E] leading-relaxed"
             >
-              Globally recognized photographers crafting wedding stories.
+              Kolkata & West Bengal's award-winning fine-art wedding photographers.
               Worked across <strong className="text-[#1C1917] font-semibold">India, UAE, UK, Europe.</strong>
             </motion.p>
 
@@ -196,10 +208,10 @@ export default function Hero() {
               className="bg-white rounded-2xl p-5 border border-[#E8DFD1] shadow-[0_2px_12px_rgba(0,0,0,0.04)]"
             >
               <h3 className="font-cinzel text-[10px] tracking-[0.2em] text-[#1C1917] uppercase font-bold mb-2.5">
-                Destination Weddings
+                Kolkata & Destination Weddings
               </h3>
               <p className="text-[12px] text-[#57534E] leading-relaxed">
-                From Jaipur's palaces to Dubai's shores and London's charm, globally acclaimed for capturing luxury weddings with cinematic artistry.
+                From Kolkata's grand banquets to Jaipur's palaces, Dubai's shores and London's charm — West Bengal's most celebrated wedding photographers.
               </p>
               <a href="#portfolio" className="inline-flex items-center gap-1 mt-3 font-cinzel text-[10px] tracking-[0.15em] text-[#C5A059] uppercase hover:text-[#1C1917] transition-colors group">
                 <span>→ See Photos</span>
@@ -217,7 +229,7 @@ export default function Hero() {
                 Our Promise ✨
               </h3>
               <p className="text-[12px] text-[#57534E] leading-relaxed">
-                Your wedding day is once‑in‑a‑lifetime — we treat it that way. Capturing your story with soul, precision, and timeless craft.
+                Your Bengali wedding rituals — Aashirbaad, Holud, Sindoor Khela — captured with soul, precision, and timeless fine-art craft.
               </p>
               <a href="#films" className="inline-flex items-center gap-1 mt-3 font-cinzel text-[10px] tracking-[0.15em] text-[#C5A059] uppercase hover:text-[#1C1917] transition-colors">
                 <span>→ See Films</span>

@@ -32,7 +32,14 @@ class SupabaseRestClient {
     return {
       select: async (query = '*') => {
         try {
-          const res = await fetch(`${tableUrl}?select=${query}&order=sort_order.asc,created_at.desc`, {
+          // Tables that have sort_order column
+          const tablesWithSortOrder = ['fym_media', 'fym_services_gallery', 'fym_testimonials', 'fym_wedding_films', 'fym_wedding_reels'];
+          const hasSortOrder = tablesWithSortOrder.includes(tableName);
+          const orderClause = hasSortOrder
+            ? 'order=sort_order.asc,created_at.desc'
+            : 'order=created_at.desc';
+
+          const res = await fetch(`${tableUrl}?select=${query}&${orderClause}`, {
             headers
           });
           if (!res.ok) {

@@ -60,7 +60,7 @@ const LOCATIONS = [
   'Goa / Beach Destinations',
   'Delhi NCR & North India',
   'International / Overseas Destination',
-  'Other Location (Specify Below)'
+  'Other / Custom Location (Type Here)'
 ];
 
 export default function Contact() {
@@ -73,6 +73,8 @@ export default function Contact() {
     message: ''
   });
 
+  const [isCustomLocation, setIsCustomLocation] = useState(false);
+  const [customLocation, setCustomLocation] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -108,6 +110,12 @@ export default function Contact() {
       ? formData.packageChoice.replace(/₹/g, 'Rs. ').replace(/[—–]/g, '-').trim()
       : '';
 
+    const resolvedLocation = isCustomLocation
+      ? (customLocation.trim() || 'Custom Location (To be discussed)')
+      : (formData.location === 'Other / Custom Location (Type Here)'
+          ? (customLocation.trim() || 'Custom Location (To be discussed)')
+          : formData.location);
+
     const waText = [
       '*NEW WEDDING INQUIRY - FRAME YOUR MOMENTS*',
       '',
@@ -115,7 +123,7 @@ export default function Contact() {
       `- *WhatsApp:* ${formData.phone}`,
       `- *Wedding / Event Date:* ${formData.eventDate || 'To be decided'}`,
       `- *Selected Package:* ${cleanPackage}`,
-      `- *Event City / Venue:* ${formData.location}`,
+      `- *Event City / Venue:* ${resolvedLocation}`,
       `- *Note / Vision:* ${formData.message || 'Standard Inquiry'}`,
       '',
       '_Submitted via frameyourmoments.in_'
@@ -286,23 +294,57 @@ export default function Contact() {
                 </div>
 
                 <div>
-                  <label className="flex items-center gap-1.5 font-cinzel text-[10px] tracking-wider uppercase font-bold text-[#57534E] mb-1.5">
-                    <MapPin size={12} className="text-[#E64A6E]" />
-                    <span>Event Location / City</span>
-                  </label>
-                  <div className="relative">
-                    <select
-                      name="location"
-                      value={formData.location}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-xl bg-[#FAF7F2] border border-[#E8DFD1] text-sm text-[#1C1917] focus:outline-none focus:border-[#C5A059] focus:bg-white focus:ring-2 focus:ring-[#C5A059]/15 transition-all appearance-none cursor-pointer"
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="flex items-center gap-1.5 font-cinzel text-[10px] tracking-wider uppercase font-bold text-[#57534E]">
+                      <MapPin size={12} className="text-[#E64A6E]" />
+                      <span>Event Location / City</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !isCustomLocation;
+                        setIsCustomLocation(next);
+                        if (next && !customLocation) {
+                          setCustomLocation('');
+                        }
+                      }}
+                      className="text-[10px] text-[#C5A059] hover:text-[#9B7B38] font-sans normal-case font-semibold hover:underline cursor-pointer transition-colors"
                     >
-                      {LOCATIONS.map((loc) => (
-                        <option key={loc} value={loc}>{loc}</option>
-                      ))}
-                    </select>
-                    <ChevronDown size={15} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8A7968] pointer-events-none" />
+                      {isCustomLocation ? '← Choose from popular' : '+ Type custom city'}
+                    </button>
                   </div>
+
+                  {isCustomLocation ? (
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={customLocation}
+                        onChange={(e) => setCustomLocation(e.target.value)}
+                        placeholder="Type city or venue (e.g. Varanasi, Bali...)"
+                        autoFocus
+                        className="w-full px-4 py-3 rounded-xl bg-[#FAF7F2] border border-[#C5A059]/60 text-sm text-[#1C1917] placeholder:text-[#A8A29E] focus:outline-none focus:border-[#C5A059] focus:bg-white focus:ring-2 focus:ring-[#C5A059]/20 transition-all shadow-sm"
+                      />
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <select
+                        name="location"
+                        value={formData.location}
+                        onChange={(e) => {
+                          handleChange(e);
+                          if (e.target.value === 'Other / Custom Location (Type Here)' || e.target.value === 'Other Location (Specify Below)') {
+                            setIsCustomLocation(true);
+                          }
+                        }}
+                        className="w-full px-4 py-3 rounded-xl bg-[#FAF7F2] border border-[#E8DFD1] text-sm text-[#1C1917] focus:outline-none focus:border-[#C5A059] focus:bg-white focus:ring-2 focus:ring-[#C5A059]/15 transition-all appearance-none cursor-pointer"
+                      >
+                        {LOCATIONS.map((loc) => (
+                          <option key={loc} value={loc}>{loc}</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={15} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8A7968] pointer-events-none" />
+                    </div>
+                  )}
                 </div>
               </div>
 

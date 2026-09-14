@@ -99,7 +99,7 @@ export default function Footer({ onNavigateToVideos, onNavigateToAdmin, onNaviga
             </h4>
             
             <p className="font-sans text-sm text-white/90 leading-relaxed font-light">
-              Based in Kolkata, Frame Your Moments is a premier fine-art wedding cinematography and editorial photography studio. We blend royal colors, candid warmth, and museum-grade craftsmanship across India, UAE, and worldwide destinations.
+              Based in Mukundapur, Kolkata, Frame Your Moments (FYM) is West Bengal's premier fine-art wedding photography & cinematography studio. Capturing royal Bengali weddings in Kolkata, Howrah, Asansol, Siliguri, Durgapur, Bardhaman & beyond — with museum-grade artistry across India, UAE, UK and worldwide.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
@@ -353,13 +353,20 @@ export default function Footer({ onNavigateToVideos, onNavigateToAdmin, onNaviga
           </a>
         </motion.div>
 
+        {/* Hidden SEO content — crawlable keywords for Kolkata/West Bengal */}
+        <div className="sr-only">
+          <h2>Best Wedding Photographer in Kolkata, West Bengal</h2>
+          <p>Frame Your Moments (FYM Photography) is the best wedding photographer in Kolkata and West Bengal. We provide luxury fine-art wedding photography and cinematic wedding films. Our service areas include: Kolkata, Howrah, Durgapur, Asansol, Siliguri, Bardhaman (Burdwan), Kharagpur, Haldia, Medinipur, Malda, Barasat, Krishnanagar, Cooch Behar, Jalpaiguri, Bankura, Purulia, and all major cities in West Bengal. We specialize in Bengali weddings, Holud ceremony photography, Sindoor Khela photography, Annaprasan photography, Aashirbaad photography, Bou Bhaat photography, and all traditional Bengali rituals. Wedding photography packages in Kolkata start from Rs. 40,000. Book your Kolkata wedding photographer now for 2026 and 2027 wedding dates. Contact: +91 80133 46138.</p>
+          <p>Keywords: wedding photographer Kolkata, Bengali wedding photographer, best wedding photographer West Bengal, pre-wedding shoot Kolkata, wedding cinematography West Bengal, FYM Photography, Frame Your Moments Kolkata, Anirban photographer Kolkata, Mukundapur wedding photographer, South Kolkata wedding photographer, affordable wedding photographer Kolkata, luxury wedding photographer Bengal.</p>
+        </div>
+
         {/* ═══ BOTTOM BAR & BACK TO TOP BUTTON ═══ */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-white/75">
           
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6 font-cinzel tracking-wider text-center sm:text-left">
-            <p>© 2026 Frame Your Moments. All Rights Reserved.</p>
+            <p>© 2026 Frame Your Moments, Kolkata. All Rights Reserved.</p>
             <span className="hidden sm:inline text-white/30">|</span>
-            <p className="text-white/90">Fine Art Photography & Royal Wedding Films</p>
+            <p className="text-white/90">Fine Art Wedding Photography & Cinematography · West Bengal, India</p>
             {onNavigateToAdmin && (
               <>
                 <span className="hidden sm:inline text-white/30">|</span>

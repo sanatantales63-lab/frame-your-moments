@@ -97,13 +97,13 @@ export default function About() {
 
             {/* Main Headline */}
             <h2 className="font-serif-luxury text-4xl sm:text-5xl lg:text-6xl font-light text-[#1C1917] leading-[1.12]">
-              We don't just take pictures.{' '}
-              <em className="font-serif-luxury italic text-[#8A7968]">We preserve the soul</em> of your story.
+              Kolkata's finest wedding artists.{' '}
+              <em className="font-serif-luxury italic text-[#8A7968]">Preserving the soul</em> of your story.
             </h2>
 
             {/* Description */}
             <p className="font-sans text-sm sm:text-base text-[#57534E] leading-relaxed">
-              Founded with a passion for royal heritage and fine-art portraiture, Frame Your Moments (FYM) has spent over a decade documenting India’s most breathtaking weddings. Beyond staged poses and camera lights, we look for the unscripted poetry—the quiet tear, the joyful belly laugh, and the sacred rituals.
+              Founded with a passion for royal Bengali heritage and fine-art portraiture, Frame Your Moments (FYM Photography) has spent over a decade documenting Kolkata's and West Bengal's most breathtaking weddings. From grand Kolkata ballrooms to intimate river-side ceremonies across Bengal — we capture the unscripted poetry: the quiet tear during Sindoor Khela, the joyful Holud celebrations, and the sacred rituals of a Bengali wedding day.
             </p>
 
             {/* Interactive Ethos Tabs (01, 02, 03) */}
@@ -174,7 +174,7 @@ export default function About() {
                 </div>
                 <div>
                   <h4 className="font-serif-luxury text-lg font-bold text-[#1C1917] leading-none">
-                    Rishav & Team
+                    Anirban & Team
                   </h4>
                   <span className="font-cinzel text-[9px] tracking-[0.2em] uppercase text-[#8A7968]">
                     Founders & Lead Artists
