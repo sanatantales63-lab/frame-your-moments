@@ -25,7 +25,8 @@ export default function FeaturedVideoBanner({ onNavigateToVideos }) {
           muted={isMuted}
           playsInline
           poster="/client1.jpg"
-          className="w-full h-full object-cover scale-105 filter brightness-[0.78] contrast-[1.05]"
+          className="absolute top-1/2 left-1/2 min-w-full min-h-full object-cover filter brightness-[0.78] contrast-[1.05]"
+          style={{ transform: 'translate(-50%, -50%) rotate(-90deg) scale(1.78)' }}
         >
           <source src="/featured_wedding_film.webm" type="video/webm" />
           <source src="/featured_wedding_film.mp4" type="video/mp4" />
