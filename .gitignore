@@ -25,3 +25,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Large video files (hosted on Cloudinary)
+public/*.webm
+public/*.mp4
