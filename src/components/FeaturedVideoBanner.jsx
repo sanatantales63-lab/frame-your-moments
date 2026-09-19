@@ -27,7 +27,7 @@ export default function FeaturedVideoBanner({ onNavigateToVideos }) {
           poster="/client1.jpg"
           className="w-full h-full object-cover scale-105 filter brightness-[0.78] contrast-[1.05]"
         >
-          <source src="https://res.cloudinary.com/vyc9r3kd/video/upload/v1789814035/Sneha_Ayush_Final_Wedding_Reel_1.webm" type="video/webm" />
+          <source src="https://res.cloudinary.com/vyc9r3kd/video/upload/a_-90/v1789814035/Sneha_Ayush_Final_Wedding_Reel_1.webm" type="video/webm" />
           Your browser does not support the video tag.
         </video>
       </div>
