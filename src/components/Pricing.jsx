@@ -38,19 +38,6 @@ const CATEGORIES = [
 const PACKAGES_DATA = {
   both_side: [
     {
-      id: 'bs-basic', name: 'Basic Wedding', subCat: 'both',
-      tagline: 'Ideal for Both Side Celebrations',
-      originalPrice: '75,000', price: '65,000', discountNote: 'Save ₹10,000',
-      accent: '#C5A059', popular: false, badge: 'Save ₹10K',
-      duration: '3 Days Both Side', photographers: '2 Photographers',
-      cinematographers: '2 Cinematographers', drone: 'Not Included',
-      photos: 'All Raw Soft Copies + 250 (125+125) Edited Pictures',
-      album: '2 Plezer Album 40 Pages (20 Sheets)',
-      video: '1 Reel, 1 Mint Teaser, 35 Mints Full Video',
-      extraDeliverables: [],
-      keyHighlights: ['3 Days Both Side Coverage', '2 Photographers + 2 Cinematographers', '2 Plezer Luxury Albums (40 Pgs)', '250 Edited Pictures + All Raw Copies', '35 Mints Cinematic Full Video + Teaser']
-    },
-    {
       id: 'bs-standard', name: 'Standard Wedding', subCat: 'both',
       tagline: 'Complete Family & Rituals Coverage',
       originalPrice: '85,000', price: '75,000', discountNote: 'Save ₹10,000',
@@ -543,6 +530,7 @@ export default function Pricing() {
             <div className={`hidden lg:grid gap-7 items-stretch ${
               activePackages.length <= 2 ? 'grid-cols-2 max-w-3xl mx-auto' :
               activePackages.length <= 3 ? 'grid-cols-3' :
+              activePackages.length === 4 ? 'grid-cols-2 xl:grid-cols-4' :
               'grid-cols-3 xl:grid-cols-5'
             }`}>
               {activePackages.map((pkg, i) => (

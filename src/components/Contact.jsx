@@ -26,7 +26,6 @@ const REAL_PACKAGES = [
     group: '👑 Both Side Wedding Packages',
     options: [
       'Both Side Standard — ₹75,000 (Most Popular)',
-      'Both Side Basic — ₹65,000',
       'Both Side Elite (Royal Grandeur) — ₹1,20,000'
     ]
   },
