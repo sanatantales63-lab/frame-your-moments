@@ -29,7 +29,7 @@ import confetti from 'canvas-confetti';
    ════════════════════════════════════════════════════════════════════ */
 
 const CATEGORIES = [
-  { id: 'both_side', label: 'Both Side', fullLabel: 'Both Side Wedding', icon: Heart, badge: '3-4 Days', color: '#E64A6E' },
+  { id: 'both_side', label: 'Both Side', fullLabel: 'Both Side Wedding', icon: Heart, badge: '3 Days', color: '#E64A6E' },
   { id: 'single_side', label: 'Single Side', fullLabel: 'Single Side Wedding', icon: Camera, badge: '2-3 Days', color: '#C5A059' },
   { id: 'pre_wedding', label: 'Pre-Wedding', fullLabel: 'Pre-Wedding Shoot', icon: Film, badge: '1-2 Days', color: '#00A896' },
   { id: 'engagement', label: 'Engagement', fullLabel: 'Engagement Day', icon: Gem, badge: '1 Day', color: '#9B51E0' },
@@ -68,20 +68,20 @@ const PACKAGES_DATA = {
       tagline: 'Extended Coverage with Aerial Drone',
       originalPrice: '1,10,000', price: '1,00,000', discountNote: 'Save ₹10,000',
       accent: '#9B51E0', popular: false, badge: 'Drone Included',
-      duration: '3+1 Days Both Side', photographers: '2 + 1 Photographers',
+      duration: '3 Days Both Side', photographers: '2 + 1 Photographers',
       cinematographers: '2 + 1 Cinematographers', drone: '1 Drone for Wedding Day',
       photos: 'All Raw Soft Copies + 400 (200+200) Edited Pictures',
       album: '2 Premium Canvera Album 60 Pages (30 Sheets) + 2 Canvera Minibooks',
       video: '3 Reels / Highlights, 2-3 Mints Trailer, 35-60 Mints Full Video',
       extraDeliverables: ['2 Digital Albums', '2 Calendars', '1 Pen Drive 64 GB'],
-      keyHighlights: ['3+1 Days Both Side Full Coverage', '1 4K Aerial Drone for Wedding Day', '3 Photographers + 3 Cinematographers', '2 Premium Canvera Albums (60 Pgs)', '3 Reels + Trailer + 64GB Pen Drive']
+      keyHighlights: ['3 Days Both Side Full Coverage', '1 4K Aerial Drone for Wedding Day', '3 Photographers + 3 Cinematographers', '2 Premium Canvera Albums (60 Pgs)', '3 Reels + Trailer + 64GB Pen Drive']
     },
     {
       id: 'bs-elite', name: 'Elite Wedding', subCat: 'both',
       tagline: 'Grand Royal Cinematic Celebration',
       originalPrice: '1,30,000', price: '1,20,000', discountNote: 'Save ₹10,000',
       accent: '#C5A059', popular: false, badge: 'Royal Grandeur',
-      duration: '3+1 Days Both Side', photographers: '2 + 1 Photographers',
+      duration: '3 Days Both Side', photographers: '2 + 1 Photographers',
       cinematographers: '2 + 1 Cinematographers', drone: '1 Drone for Wedding + Reception Day',
       photos: 'All Raw Soft Copies + 500 (250+250) Edited Pictures',
       album: '2 Premium Canvera Album 80 Pages (40 Sheets) + 2 Canvera Minibooks',
